@@ -13,6 +13,18 @@ sudo apt install golang-1.25-go
 sudo ln -sf /usr/lib/go-1.25/bin/go /usr/bin/go
 go version
 ```
+If that doesn't work use this:
+```bash
+sudo rm -rf /usr/local/go
+sudo rm -f /usr/bin/go  /usr/bin/gofmt
+cd /tmp
+wget https://go.dev/dl/go1.25.6.linux-amd64.tar.gz
+# wget https://go.dev/dl/go1.25.6.linux-arm64.tar.gz
+sudo tar -C /usr/local -xzf go1.25.6.linux-amd64.tar.gz
+sudo ln -sf /usr/local/go/bin/go /usr/bin/go
+sudo ln -sf /usr/local/go/bin/gofmt /usr/bin/gofmt
+go version
+```
 
 # Run on both servers (as root)
 ```bash
