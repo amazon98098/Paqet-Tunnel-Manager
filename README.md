@@ -3,7 +3,7 @@ Management script for paqet: raw socket KCP-based tunnel for firewall/DPI bypass
 
 ## Quick Start
 
-#Install prerequisites
+# Install prerequisites
 ```bash
 sudo apt update
 sudo apt remove golang-go
