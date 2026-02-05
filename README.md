@@ -3,19 +3,46 @@ Management script for paqet: raw socket KCP-based tunnel for firewall/DPI bypass
 
 ## Quick Start
 
-# Install prerequisites
-```bash
-
-```
-
-
-# Run on both servers (as root)
+# Install prerequisites (Run on both servers (as root))
+Run the script to install the prerequisites
+Press option 0 and then option 1 to install the prerequisites
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/behzadea12/Paqet-Tunnel-Manager/main/paqet-manager.sh)
 ```
-First option 1
-Then config(2-3)
 
+##Installation Steps
+# Step 1: Setup Server (Kharej – VPN Server)
+Run the script:
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/behzadea12/Paqet-Tunnel-Manager/main/paqet-manager.sh)
+````
+### Configuration Steps
+1. **Select option 2** (Kharej)
+2. **Enter a custom name** for the tunnel between the two servers
+3. **Press Enter** *(automatic)*
+4. **Press Enter** *(automatic)*
+5. **Press Enter** *(automatic)*
+6. **Specify the port** used between the two servers (e.g. `555`)
+7. **Save the generated secret key**, then press **`Y`** to continue
+8. **Select option 1**
+9. **Select option 2**
+10. **Enter V2Ray / OpenVPN port(s)**
+    Single: `555` — Multiple: `555,666,777`
+
+# Step 2: Setup Server (Iran – Client(Entry Point))
+### Configuration Steps
+1. **Select option 3** (Iran)
+2. **Enter the Kharej server IP**
+3. **Specify the port** used between the two servers (e.g. `555`)
+4. **Enter the secret key** generated on the server(Kharej)
+5. **Enter a custom name** for the tunnel between the two servers
+6. **Press Enter** *(automatic)*
+7. **Press Enter** *(automatic)*
+8. **Press Enter** *(automatic)*
+9. **Select option 1**
+10. **Select option 2**
+11. **Enter V2Ray / OpenVPN port(s)**
+    Single: `555` — Multiple: `555,666,777`
 
 ## Troubleshooting: Paqet Installation Issues
 
