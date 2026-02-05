@@ -236,11 +236,19 @@ generate_secret_key() {
 }
 
 # Download and install Paqet binary
+# Download and install Paqet binary
 install_paqet() {
     print_step "Installing Paqet binary..."
     
-    local arch
-    arch=$(detect_arch)
+    # Display system info
+    echo -e "${YELLOW}System Information:${NC}"
+    local os=$(detect_os)
+    local arch=$(detect_arch)
+    echo -e "  OS:        ${CYAN}$os${NC}"
+    echo -e "  Arch:      ${CYAN}$arch${NC}"
+    echo -e "  Version:   ${CYAN}$PAQET_VERSION${NC}"
+    echo ""
+    
     if [ $? -ne 0 ]; then
         return 1
     fi
@@ -253,6 +261,11 @@ install_paqet() {
     
     # Create directory if doesn't exist
     mkdir -p "$local_dir"
+    
+    # Display expected filename
+    local expected_file="paqet-${os}-${arch}-${version}.tar.gz"
+    echo -e "${YELLOW}Expected filename:${NC} ${CYAN}$expected_file${NC}"
+    echo ""
     
     # Check if there are any .tar.gz files in /root/paqet
     local local_files=()
@@ -267,13 +280,24 @@ install_paqet() {
         
         for i in "${!local_files[@]}"; do
             local filename=$(basename "${local_files[$i]}")
-            echo -e "  $((i+1)). ${CYAN}$filename${NC}"
+            local filesize=$(du -h "${local_files[$i]}" | cut -f1)
+            
+            # Highlight if filename matches expected pattern
+            if [[ "$filename" == *"$arch"* ]] && [[ "$filename" == *"$os"* ]]; then
+                echo -e "  $((i+1)). ${GREEN}$filename${NC} (${filesize})"
+            else
+                echo -e "  $((i+1)). ${CYAN}$filename${NC} (${filesize})"
+            fi
         done
         
         echo ""
         echo -e "${YELLOW}Options:${NC}"
-        echo -e "  ${CYAN}0)${NC} Download from GitHub (default)"
+        echo -e "  ${CYAN}0)${NC} Download from GitHub (recommended for: $os/$arch)"
         echo -e "  ${CYAN}1-${#local_files[@]})${NC} Use local file"
+        echo ""
+        echo -e "${YELLOW}Download manually from:${NC}"
+        echo -e "${CYAN}https://github.com/${GITHUB_REPO}/releases${NC}"
+        echo -e "${YELLOW}Save to:${NC} ${CYAN}$local_dir/${NC}"
         echo ""
         
         read -p "Choose [0-${#local_files[@]}]: " file_choice
@@ -284,38 +308,61 @@ install_paqet() {
             cp "$selected_file" "/tmp/paqet.tar.gz"
         else
             # Download from GitHub
-            print_info "Downloading from GitHub..."
-            local archive_name="paqet-${os}-${arch}-${version}.tar.gz"
+            print_info "Downloading from GitHub for $os/$arch..."
+            local archive_name="$expected_file"
             local download_url="https://github.com/${GITHUB_REPO}/releases/download/${version}/${archive_name}"
             
             if ! curl -fsSL "$download_url" -o "/tmp/paqet.tar.gz" 2>/dev/null; then
                 print_error "Download failed from GitHub"
                 print_info "URL: $download_url"
+                print_info ""
+                print_info "Please download manually:"
+                print_info "  URL: $download_url"
+                print_info "  Save to: $local_dir/$archive_name"
+                print_info "  Then run this installer again"
                 
                 # Try to use any local file as fallback
                 if [ ${#local_files[@]} -gt 0 ]; then
-                    print_warning "Using first available local file as fallback"
-                    cp "${local_files[0]}" "/tmp/paqet.tar.gz"
+                    echo ""
+                    read -p "Use first available local file as fallback? (y/N): " use_fallback
+                    if [[ "$use_fallback" =~ ^[Yy]$ ]]; then
+                        print_warning "Using first available local file as fallback"
+                        cp "${local_files[0]}" "/tmp/paqet.tar.gz"
+                    else
+                        return 1
+                    fi
                 else
                     return 1
                 fi
             else
                 print_success "Downloaded from GitHub"
+                # Also save a copy to local directory for future use
+                cp "/tmp/paqet.tar.gz" "$local_dir/$archive_name" 2>/dev/null && \
+                print_info "Saved copy to $local_dir/$archive_name for future use"
             fi
         fi
     else
         # No local files, download from GitHub
         print_info "No local files found. Downloading from GitHub..."
-        local archive_name="paqet-${os}-${arch}-${version}.tar.gz"
+        local archive_name="$expected_file"
         local download_url="https://github.com/${GITHUB_REPO}/releases/download/${version}/${archive_name}"
         
         if ! curl -fsSL "$download_url" -o "/tmp/paqet.tar.gz" 2>/dev/null; then
             print_error "Download failed"
             print_info "URL: $download_url"
-            print_info "Please download manually and place in $local_dir/"
+            print_info ""
+            print_info "Please download manually:"
+            print_info "  System: $os $arch"
+            print_info "  Version: $version"
+            print_info "  URL: $download_url"
+            print_info "  Save to: $local_dir/$archive_name"
+            print_info "  Then run this installer again"
             return 1
         fi
         print_success "Downloaded from GitHub"
+        # Save a copy to local directory
+        cp "/tmp/paqet.tar.gz" "$local_dir/$archive_name" 2>/dev/null && \
+        print_info "Saved copy to $local_dir/$archive_name for future use"
     fi
     
     # Extract and install
