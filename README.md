@@ -181,6 +181,40 @@ I am usually online and will assist you as soon as possible.
 
 ---
 
+## 📸 Script Screenshots
+
+<details>
+<summary>Main Menu</summary>
+<br>
+<img src="images/Main_Menu.png" width="800">
+</details>
+
+<details>
+<summary>Install Paqet</summary>
+<br>
+<img src="images/Install_paqet.png" width="800">
+</details>
+
+<details>
+<summary>List Services</summary>
+<br>
+<img src="images/List_Services.png" width="800">
+</details>
+
+<details>
+<summary>Manage Service</summary>
+<br>
+<img src="images/Manage_Service.png" width="800">
+</details>
+
+<details>
+<summary>Optimize Server</summary>
+<br>
+<img src="images/Optimize_Server.png" width="800">
+</details>
+
+---
+
 ## License
 
 This project is licensed under the **MIT License**.
