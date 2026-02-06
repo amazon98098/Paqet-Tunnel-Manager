@@ -222,6 +222,23 @@ This project is licensed under the **MIT License**.
 
 ---
 
+## 💖 Support / Donate
+
+If you are using **Paqet-Tunnel-Manager** and want to support the development of this project, you can contribute via:
+
+<details>
+<summary>💰 Crypto</summary>
+<br>
+
+* **Tron (TRC20):**
+  `TFYnorJt5gvejLwR8XQdjep1krS9Zw8pz3`
+
+</details>
+
+> Any contribution, big or small, helps keep the project alive and motivates further development. 🙏
+
+---
+
 ## Credits
 
 * **[paqet](https://github.com/hanselime/paqet)** – Raw packet tunneling library by hanselime
