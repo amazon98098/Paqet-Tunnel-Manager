@@ -49,18 +49,19 @@ bash <(curl -fsSL https://raw.githubusercontent.com/behzadea12/Paqet-Tunnel-Mana
 #### Configuration Steps
 
 1. **Select option 2** (Kharej)
-2. **Enter a custom name** for the tunnel between the two servers
-3. **Press Enter** *(automatic)*
-4. **Press Enter** *(automatic)*
-5. **Press Enter** *(automatic)*
-6. **Specify the port** used between the two servers (e.g. `555`)
-7. **Save the generated secret key**, then press **`Y`** to continue
-8. **Select option 1 or..**
-9. **conn value** → Number of KCP connections
-10. **MTU** → Usually 1350 is fine (press Enter)
-11. **Select option 2**
-12. **Enter V2Ray / OpenVPN port(s)**
-    Single: `555` — Multiple: `555,666,777`
+2. **Enter a service name** for the tunnel between the two servers (e.g. `fanland1`)
+3. **Enter the listen port** (e.g. `443` or `8443`)
+4. **Press Enter** to auto-generate the secret key
+5. **Save the generated secret key**, then press **`Y`** to confirm and continue
+6. **Select KCP mode**  (default: `fast`)
+7. **conn value** → Number of KCP connections (e.g. `4`)
+8. **MTU** → Default is `1350` (press Enter) or set manually (e.g. `1200`)
+9. **Select encryption option** (default: `aes-128-gcm`)
+10. **pcap sockbuf** → Press Enter to keep default
+11. **transport tcpbuf** → Press Enter to keep default
+12. **transport udpbuf** → Press Enter to keep default
+13. **Enter V2Ray / application port(s)**
+    Single: `9090` — Multiple: `9090,9091,9092`
 
 ---
 
@@ -69,19 +70,23 @@ bash <(curl -fsSL https://raw.githubusercontent.com/behzadea12/Paqet-Tunnel-Mana
 #### Configuration Steps
 
 1. **Select option 3** (Iran)
-2. **Enter the Kharej server IP**
-3. **Specify the port** used between the two servers (e.g. `555`)
-4. **Enter the secret key** generated on the Kharej server
-5. **Enter a custom name** for the tunnel between the two servers
-6. **Press Enter** *(automatic)*
-7. **Press Enter** *(automatic)*
-8. **Press Enter** *(automatic)*
-9. **Select option 1 or..**
-10. **conn value** → Number of KCP connections
-11. **MTU** → Usually 1350 is fine (press Enter)
-12. **Select option 2**
-13. **Enter V2Ray / OpenVPN port(s)**
-    Single: `555` — Multiple: `555,666,777`
+2. **Enter a service name** for the tunnel (e.g. `fanland`)
+3. **Enter the Kharej server IP** (e.g. `65.109.206.29`)
+4. **Enter the server port** used between the two servers (e.g. `443`)
+5. **Enter the secret key** generated on the server side
+6. **Select KCP mode** (default: `fast`)
+7. **conn value** → Number of KCP connections (default: `1`)
+8. **MTU** → Default is `1350` (press Enter)
+9. **Select encryption option** (default: `aes-128-gcm`)
+10. **pcap sockbuf** → Press Enter to keep default
+11. **transport tcpbuf** → Press Enter to keep default
+12. **transport udpbuf** → Press Enter to keep default
+13. **Enter forward port(s)**
+    Single: `333` — Multiple: `333,394,395`
+14. **Select protocol for each port**
+    * `1` tcp
+    * `2` udp
+    * `3` tcp/udp
 
 ---
 
