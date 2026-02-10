@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #=================================================
 # Paqet Tunnel Manager
 # Version: 3.8
@@ -6,6 +7,7 @@
 # GitHub: https://github.com/hanselime/paqet
 # Design and development by: https://github.com/behzadea12 - https://t.me/behzad_developer
 #=================================================
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,6 +17,7 @@ BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
 WHITE='\033[1;37m'
 NC='\033[0m'
+
 # Configuration
 SCRIPT_VERSION="3.8"
 PAQET_VERSION="v1.0.0-alpha.14"
@@ -24,34 +27,37 @@ BIN_DIR="/usr/local/bin"
 INSTALL_DIR="/opt/paqet"
 GITHUB_REPO="hanselime/paqet"
 SERVICE_NAME="paqet"
+
 # Banner
 show_banner() {
     clear
     echo -e "${MAGENTA}"
     echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║ ║"
-    echo "║ ██████╗ █████╗ ██████╗ ███████╗████████╗ ║"
-    echo "║ ██╔══██╗██╔══██╗██╔═══██╗██╔════╝╚══██╔══╝ ║"
-    echo "║ ██████╔╝███████║██║ ██║█████╗ ██║ ║"
-    echo "║ ██╔═══╝ ██╔══██║██║▄▄ ██║██╔══╝ ██║ ║"
-    echo "║ ██║ ██║ ██║╚██████╔╝███████╗ ██║ ║"
-    echo "║ ╚═╝ ╚═╝ ╚═╝ ╚══▀▀═╝ ╚══════╝ ╚═╝ ║"
-    echo "║ ║"
-    echo "║ Raw Packet Tunnel - Firewall Bypass ║"
-    echo "║ Manager v3.8 ║"
-    echo "║ ║"
-    echo "║ https://t.me/behzad_developer ║"
-    echo "║ https://github.com/behzadea12 ║"
-    echo "║ ║"
+    echo "║                                                              ║"
+    echo "║     ██████╗  █████╗  ██████╗ ███████╗████████╗               ║"
+    echo "║     ██╔══██╗██╔══██╗██╔═══██╗██╔════╝╚══██╔══╝               ║"
+    echo "║     ██████╔╝███████║██║   ██║█████╗     ██║                  ║"
+    echo "║     ██╔═══╝ ██╔══██║██║▄▄ ██║██╔══╝     ██║                  ║"
+    echo "║     ██║     ██║  ██║╚██████╔╝███████╗   ██║                  ║"
+    echo "║     ╚═╝     ╚═╝  ╚═╝ ╚══▀▀═╝ ╚══════╝   ╚═╝                  ║"
+    echo "║                                                              ║"
+    echo "║          Raw Packet Tunnel - Firewall Bypass                 ║"
+    echo "║                                 Manager v3.8                 ║"
+    echo "║                                                              ║"
+    echo "║          https://t.me/behzad_developer                       ║"
+    echo "║          https://github.com/behzadea12                       ║"    
+    echo "║                                                              ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
+
 # Print functions
 print_step() { echo -e "${BLUE}[*]${NC} $1"; }
 print_success() { echo -e "${GREEN}[✓]${NC} $1"; }
 print_error() { echo -e "${RED}[✗]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[!]${NC} $1"; }
 print_info() { echo -e "${CYAN}[i]${NC} $1"; }
+
 # Check root
 check_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -59,6 +65,7 @@ check_root() {
         exit 1
     fi
 }
+
 # Detect OS
 detect_os() {
     if [ -f /etc/os-release ]; then
@@ -72,11 +79,12 @@ detect_os() {
     fi
     echo "$OS"
 }
+
 # Detect architecture
 detect_arch() {
     local arch
     arch=$(uname -m)
-   
+    
     case $arch in
         x86_64|x86-64|amd64)
             echo "amd64"
@@ -96,6 +104,7 @@ detect_arch() {
             ;;
     esac
 }
+
 # Get public IP
 get_public_ip() {
     local ip=""
@@ -103,27 +112,28 @@ get_public_ip() {
     ip=$(curl -4 -s --max-time 3 icanhazip.com 2>/dev/null) || \
     ip=$(curl -4 -s --max-time 3 api.ipify.org 2>/dev/null) || \
     ip=$(hostname -I | awk '{print $1}' 2>/dev/null)
-   
+    
     if echo "$ip" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
         echo "$ip"
     else
         echo "Unknown"
     fi
 }
+
 # Get network information
 get_network_info() {
     local interface
     local local_ip
     local gateway_ip
     local gateway_mac
-   
+    
     # Get default interface
     if command -v ip &> /dev/null; then
         interface=$(ip route | grep default | awk '{print $5}' | head -1)
     else
         interface="eth0"
     fi
-   
+    
     # Get local IP
     if [ -n "$interface" ]; then
         if command -v ip &> /dev/null; then
@@ -132,49 +142,50 @@ get_network_info() {
             local_ip=$(ifconfig "$interface" 2>/dev/null | grep -oE 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -oE '([0-9]*\.){3}[0-9]*' | head -1)
         fi
     fi
-   
+    
     # Get gateway IP
     if command -v ip &> /dev/null; then
         gateway_ip=$(ip route | grep default | awk '{print $3}' | head -1)
     fi
-   
+    
     # Get gateway MAC
     if [ -n "$gateway_ip" ]; then
         # Try to ping to populate ARP cache
         ping -c 1 -W 1 "$gateway_ip" >/dev/null 2>&1 || true
-       
+        
         # Try ip neigh first
         gateway_mac=$(ip neigh show "$gateway_ip" 2>/dev/null | grep -oE '([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}' | head -1)
-       
+        
         # Fallback to arp
         if [ -z "$gateway_mac" ] && command -v arp &> /dev/null; then
             gateway_mac=$(arp -n "$gateway_ip" 2>/dev/null | awk '/^'$gateway_ip'/ {print $3}' | head -1)
         fi
     fi
-   
+    
     # Return values
     NETWORK_INTERFACE="$interface"
     LOCAL_IP="$local_ip"
     GATEWAY_IP="$gateway_ip"
     GATEWAY_MAC="$gateway_mac"
 }
+
 # Check port conflict
 check_port_conflict() {
     local port="$1"
-   
+    
     if ss -tuln 2>/dev/null | grep -q ":${port} "; then
         print_warning "Port $port is already in use!"
-       
+        
         local pid
         pid=$(lsof -t -i:$port 2>/dev/null | head -1)
         if [ -n "$pid" ]; then
             local pname
             pname=$(ps -p "$pid" -o comm= 2>/dev/null || echo "unknown")
             print_info "Process: $pname (PID: $pid)"
-           
+            
             echo ""
             read -p "Kill this process? (y/N): " kill_choice
-           
+            
             if [[ "$kill_choice" =~ ^[Yy]$ ]]; then
                 kill -9 "$pid" 2>/dev/null || true
                 sleep 1
@@ -187,13 +198,14 @@ check_port_conflict() {
     fi
     return 0
 }
+
 # Install dependencies
 install_dependencies() {
     print_step "Installing dependencies..."
-   
+    
     local os
     os=$(detect_os)
-   
+    
     case $os in
         ubuntu|debian)
             apt update -qq >/dev/null 2>&1 || true
@@ -210,9 +222,10 @@ install_dependencies() {
             print_warning "Unknown OS. Please install manually: libpcap iptables curl cron"
             ;;
     esac
-   
+    
     print_success "Dependencies installed"
 }
+
 # Generate secret key
 generate_secret_key() {
     if command -v openssl &> /dev/null; then
@@ -221,72 +234,73 @@ generate_secret_key() {
         cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32
     fi
 }
+
 # Download and install Paqet binary
 install_paqet() {
     print_step "Installing Paqet binary..."
-   
+    
     # Display system info
     echo -e "${YELLOW}System Information:${NC}"
     local os=$(detect_os)
     local arch=$(detect_arch)
-    echo -e " OS: ${CYAN}$os${NC}"
-    echo -e " Arch: ${CYAN}$arch${NC}"
-    echo -e " Version: ${CYAN}$PAQET_VERSION${NC}"
+    echo -e "  OS:        ${CYAN}$os${NC}"
+    echo -e "  Arch:      ${CYAN}$arch${NC}"
+    echo -e "  Version:   ${CYAN}$PAQET_VERSION${NC}"
     echo ""
-   
+    
     if [ $? -ne 0 ]; then
         return 1
     fi
-   
+    
     local os="linux"
     local version="$PAQET_VERSION"
-   
+    
     # Check for local files in /root/paqet
     local local_dir="/root/paqet"
-   
+    
     # Create directory if doesn't exist
     mkdir -p "$local_dir"
-   
+    
     # Display expected filename
     local expected_file="paqet-${os}-${arch}-${version}.tar.gz"
     echo -e "${YELLOW}Expected filename:${NC} ${CYAN}$expected_file${NC}"
     echo ""
-   
+    
     # Check if there are any .tar.gz files in /root/paqet
     local local_files=()
     if [ -d "$local_dir" ]; then
         mapfile -t local_files < <(find "$local_dir" -name "*.tar.gz" -type f 2>/dev/null)
     fi
-   
+    
     # If local files exist, let user choose
     if [ ${#local_files[@]} -gt 0 ]; then
         echo -e "${YELLOW}Found local paqet archives in $local_dir:${NC}"
         echo ""
-       
+        
         for i in "${!local_files[@]}"; do
             local filename=$(basename "${local_files[$i]}")
             local filesize=$(du -h "${local_files[$i]}" | cut -f1)
-           
+            
             # Highlight if filename matches expected pattern
             if [[ "$filename" == *"$arch"* ]] && [[ "$filename" == *"$os"* ]]; then
-                echo -e " $((i+1)). ${GREEN}$filename${NC} (${filesize})"
+                echo -e "  $((i+1)). ${GREEN}$filename${NC} (${filesize})"
             else
-                echo -e " $((i+1)). ${CYAN}$filename${NC} (${filesize})"
+                echo -e "  $((i+1)). ${CYAN}$filename${NC} (${filesize})"
             fi
         done
-       
+        
         echo ""
         echo -e "${YELLOW}Options:${NC}"
-        echo -e " ${CYAN}0)${NC} Download from GitHub (recommended for: $os/$arch)"
-        echo -e " ${CYAN}1-${#local_files[@]})${NC} Use local file"
+        echo -e "  ${CYAN}0)${NC} Download from GitHub (recommended for: $os/$arch)"
+        echo -e "  ${CYAN}1-${#local_files[@]})${NC} Use local file"
         echo ""
         echo -e "${YELLOW}Download manually from:${NC}"
         echo -e "${CYAN}https://github.com/${GITHUB_REPO}/releases${NC}"
         echo -e "${YELLOW}Save to:${NC} ${CYAN}$local_dir/${NC}"
         echo ""
-       
+        
         read -p "Choose [0-${#local_files[@]}]: " file_choice
-       
+        
         if [[ "$file_choice" -ge 1 ]] && [[ "$file_choice" -le ${#local_files[@]} ]]; then
             local selected_file="${local_files[$((file_choice-1))]}"
             print_success "Using local file: $(basename "$selected_file")"
@@ -296,16 +310,16 @@ install_paqet() {
             print_info "Downloading from GitHub for $os/$arch..."
             local archive_name="$expected_file"
             local download_url="https://github.com/${GITHUB_REPO}/releases/download/${version}/${archive_name}"
-           
+            
             if ! curl -fsSL "$download_url" -o "/tmp/paqet.tar.gz" 2>/dev/null; then
                 print_error "Download failed from GitHub"
                 print_info "URL: $download_url"
                 print_info ""
                 print_info "Please download manually:"
-                print_info " URL: $download_url"
-                print_info " Save to: $local_dir/$archive_name"
-                print_info " Then run this installer again"
-               
+                print_info "  URL: $download_url"
+                print_info "  Save to: $local_dir/$archive_name"
+                print_info "  Then run this installer again"
+                
                 # Try to use any local file as fallback
                 if [ ${#local_files[@]} -gt 0 ]; then
                     echo ""
@@ -331,17 +345,17 @@ install_paqet() {
         print_info "No local files found. Downloading from GitHub..."
         local archive_name="$expected_file"
         local download_url="https://github.com/${GITHUB_REPO}/releases/download/${version}/${archive_name}"
-       
+        
         if ! curl -fsSL "$download_url" -o "/tmp/paqet.tar.gz" 2>/dev/null; then
             print_error "Download failed"
             print_info "URL: $download_url"
             print_info ""
             print_info "Please download manually:"
-            print_info " System: $os $arch"
-            print_info " Version: $version"
-            print_info " URL: $download_url"
-            print_info " Save to: $local_dir/$archive_name"
-            print_info " Then run this installer again"
+            print_info "  System: $os $arch"
+            print_info "  Version: $version"
+            print_info "  URL: $download_url"
+            print_info "  Save to: $local_dir/$archive_name"
+            print_info "  Then run this installer again"
             return 1
         fi
         print_success "Downloaded from GitHub"
@@ -349,16 +363,16 @@ install_paqet() {
         cp "/tmp/paqet.tar.gz" "$local_dir/$archive_name" 2>/dev/null && \
         print_info "Saved copy to $local_dir/$archive_name for future use"
     fi
-   
+    
     # Extract and install
     mkdir -p "$INSTALL_DIR"
-   
+    
     tar -xzf "/tmp/paqet.tar.gz" -C "$INSTALL_DIR" 2>/dev/null || {
         print_error "Failed to extract archive"
         rm -f "/tmp/paqet.tar.gz"
         return 1
     }
-   
+    
     # Find and install binary
     local extracted_binary="$INSTALL_DIR/paqet_${os}_${arch}"
     if [ -f "$extracted_binary" ]; then
@@ -377,100 +391,105 @@ install_paqet() {
             return 1
         fi
     fi
-   
+    
     rm -f "/tmp/paqet.tar.gz"
     return 0
 }
+
 # Configure iptables
 configure_iptables() {
     local port="$1"
-   
+    
     print_step "Configuring iptables for port $port..."
-   
+    
     if ! command -v iptables &> /dev/null; then
         print_warning "iptables not found, skipping"
         return 0
     fi
-   
+    
     # Remove existing rules
     iptables -t raw -D PREROUTING -p tcp --dport "$port" -j NOTRACK 2>/dev/null || true
     iptables -t raw -D OUTPUT -p tcp --sport "$port" -j NOTRACK 2>/dev/null || true
     iptables -t mangle -D OUTPUT -p tcp --sport "$port" --tcp-flags RST RST -j DROP 2>/dev/null || true
-   
+    
     # Add new rules
     iptables -t raw -A PREROUTING -p tcp --dport "$port" -j NOTRACK
     iptables -t raw -A OUTPUT -p tcp --sport "$port" -j NOTRACK
     iptables -t mangle -A OUTPUT -p tcp --sport "$port" --tcp-flags RST RST -j DROP
-   
+    
     print_success "iptables configured"
 }
+
 # Create systemd service
 create_systemd_service() {
     local config_name="$1"
     local service_name="paqet-${config_name}"
-   
+    
     cat > "$SERVICE_DIR/${service_name}.service" << EOF
 [Unit]
 Description=Paqet Tunnel (${config_name})
 After=network.target
 StartLimitIntervalSec=0
+
 [Service]
 Type=simple
 ExecStart=$BIN_DIR/paqet run -c $CONFIG_DIR/${config_name}.yaml
 Restart=always
 RestartSec=5
 LimitNOFILE=65535
+
 [Install]
 WantedBy=multi-user.target
 EOF
-   
+    
     systemctl daemon-reload
     print_success "Service created: ${service_name}"
 }
+
 # Get KCP mode configuration
 get_kcp_mode_config() {
     local mode_config=""
-   
+    
     # Display to terminal (not to stdout)
     echo -e "${YELLOW}Select KCP mode:${NC}" >&2
-    echo -e " 0) normal ${CYAN}(Normal speed – Normal latency – Low resource usage)${NC}" >&2
-    echo -e " 1) fast ${CYAN}(Balanced speed – Low latency – Normal resource usage)${NC}" >&2
-    echo -e " 2) fast2 ${CYAN}(High speed – Lower latency – Moderate resource usage)${NC}" >&2
-    echo -e " 3) fast3 ${CYAN}(Maximum speed – Very low latency – High CPU usage)${NC}" >&2
-    echo -e " 4) manual ${CYAN}(Advanced settings)${NC}" >&2
+    echo -e "  0) normal  ${CYAN}(Normal speed – Normal latency – Low resource usage)${NC}" >&2
+    echo -e "  1) fast    ${CYAN}(Balanced speed – Low latency – Normal resource usage)${NC}" >&2
+    echo -e "  2) fast2   ${CYAN}(High speed – Lower latency – Moderate resource usage)${NC}" >&2
+    echo -e "  3) fast3   ${CYAN}(Maximum speed – Very low latency – High CPU usage)${NC}" >&2
+    echo -e "  4) manual  ${CYAN}(Advanced settings)${NC}" >&2
     echo ""
     read -p "Choose [0-4] (default: 1): " mode_choice >&2
-   
+    
     # Get conn value for all modes
     echo ""
     echo -e "${YELLOW}Enter conn value (1-32, default: 1):${NC}" >&2
     read -p "conn: " conn >&2
     conn="${conn:-1}"
-   
+    
     # Validate conn value
     if ! [[ "$conn" =~ ^[0-9]+$ ]] || [ "$conn" -lt 1 ] || [ "$conn" -gt 32 ]; then
         echo -e "${YELLOW}Invalid conn value. Using default: 1${NC}" >&2
         conn="1"
     fi
-   
+    
     case $mode_choice in
         0)
             echo -e "${CYAN}Using normal mode${NC}" >&2
             echo "" >&2
-           
+            
             # Get MTU value
             echo -e "${YELLOW}Enter MTU value (default: 1350):${NC}" >&2
             read -p "mtu: " mtu >&2
             mtu="${mtu:-1350}"
-           
+            
             # Ask for block cipher
             echo -e "${YELLOW}Select encryption block cipher:${NC}" >&2
-            echo -e " 1) aes (default)" >&2
-            echo -e " 2) aes-128-gcm" >&2
-            echo -e " 3) none (no encryption)" >&2
-            echo -e " 4) Custom (enter manually)" >&2
+            echo -e "  1) aes (default)" >&2
+            echo -e "  2) aes-128-gcm" >&2
+            echo -e "  3) none (no encryption)" >&2
+            echo -e "  4) Custom (enter manually)" >&2
             read -p "Choose [1-4]: " block_choice >&2
-           
+            
             local block="aes"
             case $block_choice in
                 1) block="aes" ;;
@@ -482,28 +501,28 @@ get_kcp_mode_config() {
                     ;;
                 *) block="aes" ;;
             esac
-           
-            mode_config=" mode: \"normal\"
+            
+            mode_config="    mode: \"normal\"
     block: \"$block\"
     mtu: $mtu"
             ;;
         1)
             echo -e "${CYAN}Using fast mode${NC}" >&2
             echo "" >&2
-           
+            
             # Get MTU value
             echo -e "${YELLOW}Enter MTU value (default: 1350):${NC}" >&2
             read -p "mtu: " mtu >&2
             mtu="${mtu:-1350}"
-           
+            
             # Ask for block cipher
             echo -e "${YELLOW}Select encryption block cipher:${NC}" >&2
-            echo -e " 1) aes (default)" >&2
-            echo -e " 2) aes-128-gcm" >&2
-            echo -e " 3) none (no encryption)" >&2
-            echo -e " 4) Custom (enter manually)" >&2
+            echo -e "  1) aes (default)" >&2
+            echo -e "  2) aes-128-gcm" >&2
+            echo -e "  3) none (no encryption)" >&2
+            echo -e "  4) Custom (enter manually)" >&2
             read -p "Choose [1-4]: " block_choice >&2
-           
+            
             local block="aes"
             case $block_choice in
                 1) block="aes" ;;
@@ -515,28 +534,28 @@ get_kcp_mode_config() {
                     ;;
                 *) block="aes" ;;
             esac
-           
-            mode_config=" mode: \"fast\"
+            
+            mode_config="    mode: \"fast\"
     block: \"$block\"
     mtu: $mtu"
             ;;
         2)
             echo -e "${CYAN}Using fast2 mode${NC}" >&2
             echo "" >&2
-           
+            
             # Get MTU value
             echo -e "${YELLOW}Enter MTU value (default: 1350):${NC}" >&2
             read -p "mtu: " mtu >&2
             mtu="${mtu:-1350}"
-           
+            
             # Ask for block cipher
             echo -e "${YELLOW}Select encryption block cipher:${NC}" >&2
-            echo -e " 1) aes (default)" >&2
-            echo -e " 2) aes-128-gcm" >&2
-            echo -e " 3) none (no encryption)" >&2
-            echo -e " 4) Custom (enter manually)" >&2
+            echo -e "  1) aes (default)" >&2
+            echo -e "  2) aes-128-gcm" >&2
+            echo -e "  3) none (no encryption)" >&2
+            echo -e "  4) Custom (enter manually)" >&2
             read -p "Choose [1-4]: " block_choice >&2
-           
+            
             local block="aes"
             case $block_choice in
                 1) block="aes" ;;
@@ -548,28 +567,28 @@ get_kcp_mode_config() {
                     ;;
                 *) block="aes" ;;
             esac
-           
-            mode_config=" mode: \"fast2\"
+            
+            mode_config="    mode: \"fast2\"
     block: \"$block\"
     mtu: $mtu"
             ;;
         3)
             echo -e "${CYAN}Using fast3 mode${NC}" >&2
             echo "" >&2
-           
+            
             # Get MTU value
             echo -e "${YELLOW}Enter MTU value (default: 1350):${NC}" >&2
             read -p "mtu: " mtu >&2
             mtu="${mtu:-1350}"
-           
+            
             # Ask for block cipher
             echo -e "${YELLOW}Select encryption block cipher:${NC}" >&2
-            echo -e " 1) aes (default)" >&2
-            echo -e " 2) aes-128-gcm" >&2
-            echo -e " 3) none (no encryption)" >&2
-            echo -e " 4) Custom (enter manually)" >&2
+            echo -e "  1) aes (default)" >&2
+            echo -e "  2) aes-128-gcm" >&2
+            echo -e "  3) none (no encryption)" >&2
+            echo -e "  4) Custom (enter manually)" >&2
             read -p "Choose [1-4]: " block_choice >&2
-           
+            
             local block="aes"
             case $block_choice in
                 1) block="aes" ;;
@@ -581,59 +600,59 @@ get_kcp_mode_config() {
                     ;;
                 *) block="aes" ;;
             esac
-           
-            mode_config=" mode: \"fast3\"
+            
+            mode_config="    mode: \"fast3\"
     block: \"$block\"
     mtu: $mtu"
             ;;
         4)
             echo -e "${CYAN}Manual KCP configuration${NC}" >&2
             echo "" >&2
-           
+            
             # Get manual configuration parameters
             echo -e "${YELLOW}Manual KCP Parameters (press Enter for default):${NC}" >&2
-           
+            
             read -p "Nodelay [1]: " nodelay >&2
             nodelay="${nodelay:-1}"
-           
+            
             echo -e "Wdelay: false or true?" >&2
             read -p "Wdelay [false]: " wdelay >&2
             wdelay="${wdelay:-false}"
-           
+            
             echo -e "Acknodelay: false or true?" >&2
             read -p "Acknodelay [true]: " acknodelay >&2
             acknodelay="${acknodelay:-true}"
-           
+            
             read -p "Interval [20]: " interval >&2
             interval="${interval:-20}"
-           
+            
             read -p "Resend [1]: " resend >&2
             resend="${resend:-1}"
-           
+            
             read -p "Nocongestion [1]: " nocongestion >&2
             nocongestion="${nocongestion:-1}"
-           
+            
             read -p "MTU [1200]: " mtu >&2
             mtu="${mtu:-1200}"
-           
+            
             read -p "Receive window [2048]: " rcvwnd >&2
             rcvwnd="${rcvwnd:-2048}"
-           
+            
             read -p "Send window [2048]: " sndwnd >&2
             sndwnd="${sndwnd:-2048}"
-           
+            
             # Select block cipher
             echo "" >&2
             echo -e "${YELLOW}Select encryption block cipher:${NC}" >&2
-            echo -e " 1) aes (default)" >&2
-            echo -e " 2) aes-128-gcm" >&2
-            echo -e " 3) aes-128" >&2
-            echo -e " 4) aes-192" >&2
-            echo -e " 5) aes-256" >&2
-            echo -e " 6) none (no encryption)" >&2
-            echo -e " 7) Custom (enter manually)" >&2
+            echo -e "  1) aes (default)" >&2
+            echo -e "  2) aes-128-gcm" >&2
+            echo -e "  3) aes-128" >&2
+            echo -e "  4) aes-192" >&2
+            echo -e "  5) aes-256" >&2
+            echo -e "  6) none (no encryption)" >&2
+            echo -e "  7) Custom (enter manually)" >&2
             read -p "Choose [1-7]: " block_choice >&2
-           
+            
             local block="aes"
             case $block_choice in
                 1) block="aes" ;;
@@ -648,8 +667,8 @@ get_kcp_mode_config() {
                     ;;
                 *) block="aes" ;;
             esac
-           
-            mode_config=" mode: \"manual\"
+            
+            mode_config="    mode: \"manual\"
     nodelay: $nodelay
     wdelay: $wdelay
     acknodelay: $acknodelay
@@ -664,30 +683,31 @@ get_kcp_mode_config() {
         *)
             echo -e "${YELLOW}Using default fast mode${NC}" >&2
             echo "" >&2
-           
+            
             # Get MTU value
             echo -e "${YELLOW}Enter MTU value (default: 1350):${NC}" >&2
             read -p "mtu: " mtu >&2
             mtu="${mtu:-1350}"
-           
-            mode_config=" mode: \"fast\"
+            
+            mode_config="    mode: \"fast\"
     block: \"aes\"
     mtu: $mtu"
             ;;
     esac
-   
+    
     # Return both conn and mode_config (conn as first line, then mode_config)
     echo "CONN:$conn"
     echo "$mode_config"
 }
+
 # Add automatic restart cronjob for service
 add_auto_restart_cronjob() {
     local service_name="$1"
     local cron_interval="$2"
-   
+    
     local cron_command="systemctl restart ${service_name}"
     local cron_line=""
-   
+    
     case $cron_interval in
         "1min")
             cron_line="*/1 * * * * $cron_command"
@@ -715,16 +735,16 @@ add_auto_restart_cronjob() {
             return 1
             ;;
     esac
-   
+    
     # Check if cronjob already exists
     if crontab -l 2>/dev/null | grep -q "$cron_command"; then
         # Remove existing cronjob
         crontab -l 2>/dev/null | grep -v "$cron_command" | crontab -
     fi
-   
+    
     # Add new cronjob
     (crontab -l 2>/dev/null; echo "$cron_line") | crontab -
-   
+    
     if [ $? -eq 0 ]; then
         print_success "Cronjob added: $cron_interval restart for $service_name"
         return 0
@@ -733,11 +753,12 @@ add_auto_restart_cronjob() {
         return 1
     fi
 }
+
 # Remove cronjob for service
 remove_cronjob() {
     local service_name="$1"
     local cron_command="systemctl restart ${service_name}"
-   
+    
     if crontab -l 2>/dev/null | grep -q "$cron_command"; then
         crontab -l 2>/dev/null | grep -v "$cron_command" | crontab -
         print_success "Cronjob removed for $service_name"
@@ -747,48 +768,50 @@ remove_cronjob() {
         return 1
     fi
 }
+
 # View cronjob for service
 view_cronjob() {
     local service_name="$1"
     local cron_command="systemctl restart ${service_name}"
-   
+    
     echo -e "${YELLOW}Cronjobs for $service_name:${NC}"
     echo ""
-   
+    
     if crontab -l 2>/dev/null | grep -q "$cron_command"; then
         crontab -l 2>/dev/null | grep "$cron_command"
     else
         print_info "No cronjob found for $service_name"
     fi
 }
+
 # Cronjob menu for service
 manage_cronjob() {
     local service_name="$1"
     local display_name="$2"
-   
+    
     while true; do
         show_banner
         echo -e "${YELLOW}Manage Cronjob for: $display_name${NC}"
         echo ""
-       
+        
         echo -e "${CYAN}Current cronjob:${NC}"
         view_cronjob "$service_name"
         echo ""
-       
+        
         echo -e "${CYAN}Add/Change Cronjob:${NC}"
-        echo -e " 1. 1 minute"
-        echo -e " 2. 5 minutes"
-        echo -e " 3. 15 minutes"
-        echo -e " 4. 30 minutes"
-        echo -e " 5. 1 hour"
-        echo -e " 6. 12 hours"
-        echo -e " 7. 1 day"
-        echo -e " 8. Remove cronjob"
-        echo -e " 9. Back to service menu"
+        echo -e "  1. 1 minute"
+        echo -e "  2. 5 minutes"
+        echo -e "  3. 15 minutes"
+        echo -e "  4. 30 minutes"
+        echo -e "  5. 1 hour"
+        echo -e "  6. 12 hours"
+        echo -e "  7. 1 day"
+        echo -e "  8. Remove cronjob"
+        echo -e "  9. Back to service menu"
         echo ""
-       
+        
         read -p "Choose option [1-9]: " cron_choice
-       
+        
         case $cron_choice in
             1)
                 add_auto_restart_cronjob "$service_name" "1min"
@@ -831,25 +854,26 @@ manage_cronjob() {
         esac
     done
 }
+
 # Configure as Server (Abroad)
 configure_server() {
     while true; do
         show_banner
         echo -e "${GREEN}Configure as Server (Abroad)${NC}"
         echo ""
-       
+        
         # Get network info
         get_network_info
         local public_ip
         public_ip=$(get_public_ip)
-       
+        
         echo -e "${YELLOW}Detected Network:${NC}"
-        echo -e " Interface: ${CYAN}${NETWORK_INTERFACE:-Not found}${NC}"
-        echo -e " Local IP: ${CYAN}${LOCAL_IP:-Not found}${NC}"
-        echo -e " Public IP: ${CYAN}$public_ip${NC}"
-        echo -e " Gateway MAC: ${CYAN}${GATEWAY_MAC:-Not found}${NC}"
+        echo -e "  Interface:   ${CYAN}${NETWORK_INTERFACE:-Not found}${NC}"
+        echo -e "  Local IP:    ${CYAN}${LOCAL_IP:-Not found}${NC}"
+        echo -e "  Public IP:   ${CYAN}$public_ip${NC}"
+        echo -e "  Gateway MAC: ${CYAN}${GATEWAY_MAC:-Not found}${NC}"
         echo ""
-       
+        
         # Get config name
         read -p "Config name [server]: " config_name
         config_name="${config_name:-server}"
@@ -858,7 +882,7 @@ configure_server() {
             config_name="default"
         fi
         print_info "Sanitized config name: $config_name"
-       
+        
         # Check existing config
         if [ -f "$CONFIG_DIR/${config_name}.yaml" ]; then
             read -p "Config exists. Overwrite? (y/N): " overwrite
@@ -866,54 +890,54 @@ configure_server() {
                 continue
             fi
         fi
-       
+        
         # Get interface
         read -p "Network interface [${NETWORK_INTERFACE:-eth0}]: " interface
         interface="${interface:-${NETWORK_INTERFACE:-eth0}}"
-       
+        
         # Get local IP
         read -p "Local IP [${LOCAL_IP}]: " local_ip
         local_ip="${local_ip:-$LOCAL_IP}"
-       
+        
         # Get gateway MAC
         read -p "Gateway MAC [${GATEWAY_MAC}]: " gateway_mac
         gateway_mac="${gateway_mac:-$GATEWAY_MAC}"
-       
+        
         # Get port
         echo ""
         read -p "Listen port [8888]: " port
         port="${port:-8888}"
-       
+        
         if ! check_port_conflict "$port"; then
             read -p "Press Enter to retry..."
             continue
         fi
-       
+        
         # Get secret key
         echo ""
         local secret_key
         secret_key=$(generate_secret_key)
         echo -e "${YELLOW}Generated secret key:${NC} ${CYAN}$secret_key${NC}"
         read -p "Use this key? (Y/n): " use_key
-       
+        
         if [[ "$use_key" =~ ^[Nn]$ ]]; then
             read -p "Enter your secret key: " secret_key
         fi
-       
+        
         if [ -z "$secret_key" ]; then
             print_error "Secret key is required"
             continue
         fi
-       
+        
         # Get KCP configuration
         echo ""
         local kcp_output
         kcp_output=$(get_kcp_mode_config)
-       
+        
         # Parse conn and kcp_config from output
         local conn="1"
         local kcp_config=""
-       
+        
         while IFS= read -r line; do
             if [[ "$line" == CONN:* ]]; then
                 conn="${line#CONN:}"
@@ -921,12 +945,12 @@ configure_server() {
                 kcp_config+="$line"$'\n'
             fi
         done <<< "$kcp_output"
-       
+        
         # Get V2Ray ports
         echo ""
         read -p "V2Ray inbound ports (comma separated) [9090]: " inbound_ports
         inbound_ports="${inbound_ports:-9090}"
-       
+        
         # Install Paqet if not installed
         if [ ! -f "$BIN_DIR/paqet" ]; then
             if ! install_paqet; then
@@ -935,19 +959,22 @@ configure_server() {
                 return 1
             fi
         fi
-       
+        
         # Configure iptables
         configure_iptables "$port"
-       
+        
         # Create config
         mkdir -p "$CONFIG_DIR"
         cat > "$CONFIG_DIR/${config_name}.yaml" << EOF
 # Paqet Server Configuration
 role: "server"
+
 log:
   level: "info"
+
 listen:
   addr: ":${port}"
+
 network:
   interface: "${interface}"
   ipv4:
@@ -955,6 +982,7 @@ network:
     router_mac: "${gateway_mac}"
   tcp:
     local_flag: ["PA"]
+
 transport:
   protocol: "kcp"
   conn: ${conn}
@@ -962,32 +990,32 @@ transport:
     key: "${secret_key}"
 ${kcp_config}
 EOF
-       
+        
         print_success "Configuration saved: $CONFIG_DIR/${config_name}.yaml"
-       
+        
         # Create and start service
         create_systemd_service "$config_name"
         local service_name="paqet-${config_name}"
         systemctl enable "$service_name" --now
-       
+        
         if systemctl is-active --quiet "$service_name"; then
             print_success "Server started successfully"
-           
+            
             # Add automatic restart cronjob every 15 minutes
             echo ""
             echo -e "${YELLOW}Adding automatic restart cronjob every 15 minutes...${NC}"
             add_auto_restart_cronjob "$service_name" "15min"
-           
+            
             echo ""
             echo -e "${GREEN}════════════════════════════════════════════════════════════${NC}"
-            echo -e "${GREEN} Server Ready! ${NC}"
+            echo -e "${GREEN}                     Server Ready!                           ${NC}"
             echo -e "${GREEN}════════════════════════════════════════════════════════════${NC}"
             echo ""
-            echo -e " ${YELLOW}Public IP:${NC} ${CYAN}$public_ip${NC}"
-            echo -e " ${YELLOW}Listen Port:${NC} ${CYAN}$port${NC}"
-            echo -e " ${YELLOW}V2Ray Ports:${NC} ${CYAN}$inbound_ports${NC}"
-            echo -e " ${YELLOW}Auto Restart:${NC} ${GREEN}Every 15 minutes${NC}"
-            echo -e " ${YELLOW}Conn:${NC} ${CYAN}$conn${NC}"
+            echo -e "  ${YELLOW}Public IP:${NC}    ${CYAN}$public_ip${NC}"
+            echo -e "  ${YELLOW}Listen Port:${NC}  ${CYAN}$port${NC}"
+            echo -e "  ${YELLOW}V2Ray Ports:${NC}  ${CYAN}$inbound_ports${NC}"
+            echo -e "  ${YELLOW}Auto Restart:${NC} ${GREEN}Every 15 minutes${NC}"
+            echo -e "  ${YELLOW}Conn:${NC}         ${CYAN}$conn${NC}"
             echo ""
             echo -e "${YELLOW}Secret Key (save for client):${NC}"
             echo -e "${CYAN}$secret_key${NC}"
@@ -999,50 +1027,51 @@ EOF
             print_error "Failed to start service"
             systemctl status "$service_name" --no-pager -l
         fi
-       
+        
         read -p "Press Enter to continue..."
         return 0
     done
 }
+
 # Configure as Client (Iran)
 configure_client() {
     while true; do
         show_banner
         echo -e "${GREEN}Configure as Client (Iran)${NC}"
         echo ""
-       
+        
         # Get network info
         get_network_info
         local public_ip
         public_ip=$(get_public_ip)
-       
+        
         echo -e "${YELLOW}Detected Network:${NC}"
-        echo -e " Interface: ${CYAN}${NETWORK_INTERFACE:-Not found}${NC}"
-        echo -e " Local IP: ${CYAN}${LOCAL_IP:-Not found}${NC}"
-        echo -e " Public IP: ${CYAN}$public_ip${NC}"
-        echo -e " Gateway MAC: ${CYAN}${GATEWAY_MAC:-Not found}${NC}"
+        echo -e "  Interface:   ${CYAN}${NETWORK_INTERFACE:-Not found}${NC}"
+        echo -e "  Local IP:    ${CYAN}${LOCAL_IP:-Not found}${NC}"
+        echo -e "  Public IP:   ${CYAN}$public_ip${NC}"
+        echo -e "  Gateway MAC: ${CYAN}${GATEWAY_MAC:-Not found}${NC}"
         echo ""
-       
+        
         # Get server details
         read -p "Server IP (abroad): " server_ip
         if [ -z "$server_ip" ]; then
             print_error "Server IP is required"
             continue
         fi
-       
+        
         read -p "Server port [8888]: " server_port
         server_port="${server_port:-8888}"
-       
+        
         read -p "Secret key: " secret_key
         if [ -z "$secret_key" ]; then
             print_error "Secret key is required"
             continue
         fi
-       
+        
         # Get config name
         read -p "Config name [client]: " config_name
         config_name="${config_name:-client}"
-       
+        
         # Check existing config
         if [ -f "$CONFIG_DIR/${config_name}.yaml" ]; then
             read -p "Config exists. Overwrite? (y/N): " overwrite
@@ -1050,28 +1079,28 @@ configure_client() {
                 continue
             fi
         fi
-       
+        
         # Get interface
         read -p "Network interface [${NETWORK_INTERFACE:-eth0}]: " interface
         interface="${interface:-${NETWORK_INTERFACE:-eth0}}"
-       
+        
         # Get local IP
         read -p "Local IP [${LOCAL_IP}]: " local_ip
         local_ip="${local_ip:-$LOCAL_IP}"
-       
+        
         # Get gateway MAC
         read -p "Gateway MAC [${GATEWAY_MAC}]: " gateway_mac
         gateway_mac="${gateway_mac:-$GATEWAY_MAC}"
-       
+        
         # Get KCP configuration
         echo ""
         local kcp_output
         kcp_output=$(get_kcp_mode_config)
-       
+        
         # Parse conn and kcp_config from output
         local conn="1"
         local kcp_config=""
-       
+        
         while IFS= read -r line; do
             if [[ "$line" == CONN:* ]]; then
                 conn="${line#CONN:}"
@@ -1079,12 +1108,12 @@ configure_client() {
                 kcp_config+="$line"$'\n'
             fi
         done <<< "$kcp_output"
-       
+        
         # Get forwarding ports
         echo ""
         read -p "Ports to forward (comma separated) [9090]: " forward_ports
         forward_ports="${forward_ports:-9090}"
-       
+        
         # Check port conflicts
         IFS=',' read -ra ports_array <<< "$forward_ports"
         for port in "${ports_array[@]}"; do
@@ -1094,7 +1123,7 @@ configure_client() {
                 continue 2
             fi
         done
-       
+        
         # Install Paqet if not installed
         if [ ! -f "$BIN_DIR/paqet" ]; then
             if ! install_paqet; then
@@ -1103,7 +1132,7 @@ configure_client() {
                 return 1
             fi
         fi
-       
+        
         # Create forward configuration
         local forward_config=""
         for port in "${ports_array[@]}"; do
@@ -1112,19 +1141,22 @@ configure_client() {
   - listen: \"0.0.0.0:${port}\"
     target: \"127.0.0.1:${port}\"
     protocol: \"tcp\""
-           
+            
             # Configure iptables for each port
             configure_iptables "$port"
         done
-       
+        
         # Create config
         mkdir -p "$CONFIG_DIR"
         cat > "$CONFIG_DIR/${config_name}.yaml" << EOF
 # Paqet Client Configuration
 role: "client"
+
 log:
   level: "info"
+
 forward:${forward_config}
+
 network:
   interface: "${interface}"
   ipv4:
@@ -1133,8 +1165,10 @@ network:
   tcp:
     local_flag: ["PA"]
     remote_flag: ["PA"]
+
 server:
   addr: "${server_ip}:${server_port}"
+
 transport:
   protocol: "kcp"
   conn: ${conn}
@@ -1142,36 +1176,36 @@ transport:
     key: "${secret_key}"
 ${kcp_config}
 EOF
-       
+        
         print_success "Configuration saved: $CONFIG_DIR/${config_name}.yaml"
-       
+        
         # Create and start service
         create_systemd_service "$config_name"
         local service_name="paqet-${config_name}"
         systemctl enable "$service_name" --now
-       
+        
         if systemctl is-active --quiet "$service_name"; then
             print_success "Client started successfully"
-           
+            
             # Add automatic restart cronjob every 15 minutes
             echo ""
             echo -e "${YELLOW}Adding automatic restart cronjob every 15 minutes...${NC}"
             add_auto_restart_cronjob "$service_name" "15min"
-           
+            
             echo ""
             echo -e "${GREEN}════════════════════════════════════════════════════════════${NC}"
-            echo -e "${GREEN} Client Ready! ${NC}"
+            echo -e "${GREEN}                     Client Ready!                           ${NC}"
             echo -e "${GREEN}════════════════════════════════════════════════════════════${NC}"
             echo ""
-            echo -e " ${YELLOW}This Server:${NC} ${CYAN}$public_ip${NC}"
-            echo -e " ${YELLOW}Server:${NC} ${CYAN}$server_ip:$server_port${NC}"
-            echo -e " ${YELLOW}Forward Ports:${NC} ${CYAN}$forward_ports${NC}"
-            echo -e " ${YELLOW}Auto Restart:${NC} ${GREEN}Every 15 minutes${NC}"
-            echo -e " ${YELLOW}Conn:${NC} ${CYAN}$conn${NC}"
+            echo -e "  ${YELLOW}This Server:${NC}   ${CYAN}$public_ip${NC}"
+            echo -e "  ${YELLOW}Server:${NC}        ${CYAN}$server_ip:$server_port${NC}"
+            echo -e "  ${YELLOW}Forward Ports:${NC} ${CYAN}$forward_ports${NC}"
+            echo -e "  ${YELLOW}Auto Restart:${NC}  ${GREEN}Every 15 minutes${NC}"
+            echo -e "  ${YELLOW}Conn:${NC}          ${CYAN}$conn${NC}"
             echo ""
             echo -e "${YELLOW}Client Connection:${NC}"
-            echo -e " Connect to: ${CYAN}$public_ip${NC}"
-            echo -e " Ports: ${CYAN}$forward_ports${NC}"
+            echo -e "  Connect to: ${CYAN}$public_ip${NC}"
+            echo -e "  Ports:      ${CYAN}$forward_ports${NC}"
             echo ""
             echo -e "${YELLOW}KCP Configuration:${NC}"
             echo -e "${CYAN}$kcp_config${NC}"
@@ -1180,88 +1214,91 @@ EOF
             print_error "Failed to start service"
             systemctl status "$service_name" --no-pager -l
         fi
-       
+        
         read -p "Press Enter to continue..."
         return 0
     done
 }
+
 # List services
 list_services() {
     show_banner
     echo -e "${YELLOW}Paqet Services${NC}"
     echo ""
-   
+    
     local services=()
-    mapfile -t services < <(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null |
+    mapfile -t services < <(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null | 
                           grep -E '^paqet-.*\.service' | awk '{print $1}' || true)
-   
+    
     if [[ ${#services[@]} -eq 0 ]]; then
         print_info "No Paqet services found"
     else
         echo -e "${CYAN}┌──────────────────────────────────────────────────────────────┐${NC}"
-        echo -e "${CYAN}│ Service Name │ Status │ Type │ Auto Restart │${NC}"
+        echo -e "${CYAN}│ Service Name          │     Status     │   Type    │ Auto Restart │${NC}"
         echo -e "${CYAN}├──────────────────────────────────────────────────────────────┤${NC}"
-       
+        
         for service in "${services[@]}"; do
             local service_name="${service%.service}"
             local display_name="${service_name#paqet-}"
-           
+            
             local status=$(systemctl is-active "$service" 2>/dev/null || echo "unknown")
             local type="unknown"
             local config_file="$CONFIG_DIR/$display_name.yaml"
             if [ -f "$config_file" ]; then
                 type=$(grep "^role:" "$config_file" 2>/dev/null | awk '{print $2}' | tr -d '"' || echo "unknown")
             fi
-           
+            
             local cron_info="No"
             if crontab -l 2>/dev/null | grep -q "systemctl restart $service_name"; then
                 cron_info="Yes"
             fi
-           
+            
             local status_text="$status"
             local status_color=""
-           
+            
             case "$status" in
-                active) status_color="${GREEN}"; status_text="active " ;;
+                active)   status_color="${GREEN}"; status_text="active  " ;;
                 inactive) status_color="${YELLOW}"; status_text="inactive" ;;
-                failed) status_color="${RED}"; status_text="failed " ;;
-                *) status_color="${WHITE}"; status_text="$status" ;;
+                failed)   status_color="${RED}";   status_text="failed  " ;;
+                *)        status_color="${WHITE}"; status_text="$status" ;;
             esac
+
             printf "${CYAN}│ ${WHITE}%-21s ${CYAN}│ ${status_color}%-12s${NC} ${CYAN}│ ${WHITE}%-9s ${CYAN}│ ${WHITE}%-11s ${CYAN}│${NC}\n" \
                    "$display_name" "$status_text" "$type" "$cron_info"
         done
-       
+        
         echo -e "${CYAN}└──────────────────────────────────────────────────────────────┘${NC}"
     fi
-   
+    
     echo ""
     read -p "Press Enter to continue..."
 }
+
 # Manage service
 manage_service() {
     while true; do
         show_banner
         echo -e "${YELLOW}Manage Service${NC}"
         echo ""
-       
+        
         # Get services list
         local services=()
-        mapfile -t services < <(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null |
+        mapfile -t services < <(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null | 
                               grep -E '^paqet-.*\.service' | awk '{print $1}' || true)
-       
+        
         if [[ ${#services[@]} -eq 0 ]]; then
             print_info "No Paqet services found"
             read -p "Press Enter to continue..."
             return
         fi
-       
+        
         # Display services
         for i in "${!services[@]}"; do
             local service_name="${services[$i]%.service}"
             local display_name="${service_name#paqet-}"
             local status
             status=$(systemctl is-active "${services[$i]}" 2>/dev/null || echo "unknown")
-           
+            
             case "$status" in
                 active)
                     status_color="${GREEN}"
@@ -1273,35 +1310,35 @@ manage_service() {
                     status_color="${YELLOW}"
                     ;;
             esac
-           
-            echo -e " $((i+1)). $display_name (${status_color}$status${NC})"
+            
+            echo -e "  $((i+1)). $display_name (${status_color}$status${NC})"
         done
-       
+        
         echo ""
         read -p "Select service (1-${#services[@]}, 0 to cancel): " choice
-       
+        
         if [[ "$choice" -eq 0 ]]; then
             return
         fi
-       
+        
         if [[ "$choice" -lt 1 ]] || [[ "$choice" -gt ${#services[@]} ]]; then
             print_error "Invalid selection"
             continue
         fi
-       
+        
         local selected_service="${services[$((choice-1))]}"
         local service_name="${selected_service%.service}"
         local display_name="${service_name#paqet-}"
-       
+        
         # Service actions menu
         while true; do
             show_banner
             echo -e "${YELLOW}Managing: $display_name${NC}"
             echo ""
-           
+            
             local status
             status=$(systemctl is-active "$selected_service" 2>/dev/null || echo "unknown")
-           
+            
             echo -e "Status: "
             case "$status" in
                 active)
@@ -1317,22 +1354,22 @@ manage_service() {
                     echo -e "${YELLOW}● Unknown${NC}"
                     ;;
             esac
-           
+            
             echo ""
             echo -e "${CYAN}Actions:${NC}"
-            echo -e " 1. Start"
-            echo -e " 2. Stop"
-            echo -e " 3. Restart"
-            echo -e " 4. Status"
-            echo -e " 5. Logs"
-            echo -e " 6. View Config"
-            echo -e " 7. Cronjob Management"
-            echo -e " 8. Delete"
-            echo -e " 9. Back"
+            echo -e "  1. Start"
+            echo -e "  2. Stop"
+            echo -e "  3. Restart"
+            echo -e "  4. Status"
+            echo -e "  5. Logs"
+            echo -e "  6. View Config"
+            echo -e "  7. Cronjob Management"
+            echo -e "  8. Delete"
+            echo -e "  9. Back"
             echo ""
-           
+            
             read -p "Choose action [1-9]: " action
-           
+            
             case "$action" in
                 1)
                     systemctl start "$selected_service"
@@ -1376,7 +1413,7 @@ manage_service() {
                     if [[ "$confirm" =~ ^[Yy]$ ]]; then
                         # Remove cronjob first
                         remove_cronjob "$service_name"
-                       
+                        
                         systemctl stop "$selected_service" 2>/dev/null || true
                         systemctl disable "$selected_service" 2>/dev/null || true
                         rm -f "$SERVICE_DIR/$selected_service" 2>/dev/null || true
@@ -1397,80 +1434,82 @@ manage_service() {
         done
     done
 }
+
 # View config
 view_config() {
     show_banner
     echo -e "${YELLOW}Configuration Files${NC}"
     echo ""
-   
+    
     local configs=()
     while IFS= read -r -d '' config; do
         configs+=("$config")
     done < <(find "$CONFIG_DIR" -name "*.yaml" -type f -print0 2>/dev/null)
-   
+    
     if [[ ${#configs[@]} -eq 0 ]]; then
         print_info "No configuration files found"
     else
         for i in "${!configs[@]}"; do
             local config_name=$(basename "${configs[$i]}" .yaml)
-            echo -e " $((i+1)). $config_name"
+            echo -e "  $((i+1)). $config_name"
         done
-       
+        
         echo ""
         read -p "Select config (1-${#configs[@]}, 0 to cancel): " choice
-       
+        
         if [[ "$choice" -ge 1 ]] && [[ "$choice" -le ${#configs[@]} ]]; then
             echo ""
             cat "${configs[$((choice-1))]}"
             echo ""
         fi
     fi
-   
+    
     echo ""
     read -p "Press Enter to continue..."
 }
+
 # Install BBR
 install_bbr() {
     show_banner
     echo -e "${YELLOW}Installing BBR (Google TCP Congestion Control)${NC}"
     echo ""
-   
+    
     echo -e "${YELLOW}BBR is a TCP congestion control algorithm developed by Google.${NC}"
     echo -e "${YELLOW}It can significantly improve network performance and speed.${NC}"
     echo ""
-   
+    
     read -p "Do you want to install BBR? (y/N): " confirm
-   
+    
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}BBR installation cancelled.${NC}"
         return
     fi
-   
+    
     print_step "Downloading and installing BBR..."
-   
+    
     # Download BBR installer script
     if wget --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh -O /tmp/bbr.sh 2>/dev/null; then
         chmod +x /tmp/bbr.sh
         print_success "BBR installer downloaded"
-       
+        
         echo ""
         echo -e "${YELLOW}The BBR installer will now run.${NC}"
         echo -e "${YELLOW}Follow the on-screen instructions.${NC}"
         echo ""
         echo -e "${CYAN}Note: This may require a system reboot.${NC}"
         echo ""
-       
+        
         read -p "Press Enter to continue with BBR installation..."
-       
+        
         # Run BBR installer
         /tmp/bbr.sh
-       
+        
         echo ""
         print_success "BBR installation completed!"
         echo ""
         echo -e "${YELLOW}If the installer requested a reboot, please restart your server.${NC}"
         echo -e "${YELLOW}After reboot, BBR will be active and optimizing your network.${NC}"
-       
+        
         # Clean up
         rm -f /tmp/bbr.sh
     else
@@ -1479,29 +1518,30 @@ install_bbr() {
         echo -e "${YELLOW}You can install BBR manually with:${NC}"
         echo -e "${CYAN}wget --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh && chmod +x bbr.sh && ./bbr.sh${NC}"
     fi
-   
+    
     echo ""
     read -p "Press Enter to return to menu..."
 }
+
 # Install DNS Finder
 install_dns_finder() {
     show_banner
     echo -e "${YELLOW}Installing DNS Finder for Iran${NC}"
     echo ""
-   
+    
     echo -e "${YELLOW}This tool finds the best DNS servers for Iran by testing latency.${NC}"
     echo -e "${YELLOW}It will help improve your internet speed and connectivity.${NC}"
     echo ""
-   
+    
     read -p "Do you want to find the best DNS servers? (y/N): " confirm
-   
+    
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}DNS Finder installation cancelled.${NC}"
         return
     fi
-   
+    
     print_step "Downloading and running DNS Finder..."
-   
+    
     # Download and run DNS Finder script
     if bash <(curl -Ls https://github.com/alinezamifar/IranDNSFinder/raw/refs/heads/main/dns.sh); then
         print_success "DNS Finder completed successfully!"
@@ -1514,16 +1554,17 @@ install_dns_finder() {
         echo -e "${YELLOW}You can run DNS Finder manually with:${NC}"
         echo -e "${CYAN}bash <(curl -Ls https://github.com/alinezamifar/IranDNSFinder/raw/refs/heads/main/dns.sh)${NC}"
     fi
-   
+    
     echo ""
     read -p "Press Enter to return to menu..."
 }
+
 # Install Mirror Selector
 install_mirror_selector() {
     show_banner
     echo -e "${YELLOW}Installing Mirror Selector for Ubuntu/Debian${NC}"
     echo ""
-   
+    
     # Check if system is Ubuntu/Debian based
     local os=$(detect_os)
     if [[ "$os" != "ubuntu" ]] && [[ "$os" != "debian" ]]; then
@@ -1533,20 +1574,20 @@ install_mirror_selector() {
         read -p "Press Enter to return to menu..."
         return
     fi
-   
+    
     echo -e "${YELLOW}This tool finds the fastest apt repository mirror for your location.${NC}"
     echo -e "${YELLOW}It will significantly improve package download speeds.${NC}"
     echo ""
-   
+    
     read -p "Do you want to find the fastest apt mirror? (y/N): " confirm
-   
+    
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}Mirror Selector installation cancelled.${NC}"
         return
     fi
-   
+    
     print_step "Downloading and running Mirror Selector..."
-   
+    
     # Download and run Mirror Selector script
     if bash <(curl -Ls https://github.com/alinezamifar/DetectUbuntuMirror/raw/refs/heads/main/DUM.sh); then
         print_success "Mirror Selector completed successfully!"
@@ -1559,25 +1600,26 @@ install_mirror_selector() {
         echo -e "${YELLOW}You can run Mirror Selector manually with:${NC}"
         echo -e "${CYAN}bash <(curl -Ls https://github.com/alinezamifar/DetectUbuntuMirror/raw/refs/heads/main/DUM.sh)${NC}"
     fi
-   
+    
     echo ""
     read -p "Press Enter to return to menu..."
 }
+
 # Server Optimization Menu
 optimize_server() {
     while true; do
         show_banner
         echo -e "${YELLOW}Server Optimization Tools${NC}"
         echo ""
-       
+        
         echo -e "${CYAN}1.${NC} BBR - TCP Congestion Control Optimizer"
         echo -e "${CYAN}2.${NC} DNS Finder - Find the best DNS servers for Iran"
         echo -e "${CYAN}3.${NC} Mirror Selector - Find the fastest apt repository mirror"
         echo -e "${CYAN}4.${NC} Back to Main Menu"
         echo ""
-       
+        
         read -p "Select option [1-4]: " choice
-       
+        
         case $choice in
             1)
                 install_bbr
@@ -1597,42 +1639,43 @@ optimize_server() {
         esac
     done
 }
+
 # Uninstall Paqet
 uninstall_paqet() {
     show_banner
     echo -e "${RED}Uninstall Paqet${NC}"
     echo ""
-   
+    
     read -p "Are you sure? (y/N): " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         return
     fi
-   
+    
     print_step "Stopping services..."
-   
+    
     # Stop and disable all paqet services
     local services=()
-    mapfile -t services < <(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null |
+    mapfile -t services < <(systemctl list-unit-files --type=service --no-legend --no-pager 2>/dev/null | 
                           grep -E '^paqet-.*\.service' | awk '{print $1}' || true)
-   
+    
     for service in "${services[@]}"; do
         systemctl stop "$service" 2>/dev/null || true
         systemctl disable "$service" 2>/dev/null || true
         rm -f "$SERVICE_DIR/$service" 2>/dev/null || true
     done
-   
+    
     # Remove all cronjobs
     for service in "${services[@]}"; do
         local service_name="${service%.service}"
         remove_cronjob "$service_name"
     done
-   
+    
     systemctl daemon-reload
-   
+    
     # Remove files
     print_step "Removing files..."
     rm -f "$BIN_DIR/paqet" 2>/dev/null || true
-   
+    
     read -p "Remove configuration files? (y/N): " remove_configs
     if [[ "$remove_configs" =~ ^[Yy]$ ]]; then
         rm -rf "$CONFIG_DIR" 2>/dev/null || true
@@ -1641,26 +1684,27 @@ uninstall_paqet() {
     else
         print_info "Configuration preserved in $CONFIG_DIR/"
     fi
-   
+    
     print_success "Paqet uninstalled"
     echo ""
     read -p "Press Enter to continue..."
 }
+
 # Main menu
 main_menu() {
     while true; do
         show_banner
-       
+        
         echo -e "${YELLOW}Main Menu${NC}"
         echo ""
-       
+        
         # Check if Paqet is installed
         if [ -f "$BIN_DIR/paqet" ]; then
             echo -e "${GREEN}✓ Paqet is installed${NC}"
         else
             echo -e "${YELLOW}⚠ Paqet not installed${NC}"
         fi
-       
+        
         echo ""
         echo -e "${CYAN}0.${NC} Install Paqet Binary Only"
         echo -e "${CYAN}1.${NC} Install Dependencies"
@@ -1673,9 +1717,9 @@ main_menu() {
         echo -e "${CYAN}8.${NC} Uninstall Paqet"
         echo -e "${CYAN}9.${NC} Exit"
         echo ""
-       
+        
         read -p "Select option [0-9]: " choice
-       
+        
         case $choice in
             0)
                 install_paqet
@@ -1712,10 +1756,11 @@ main_menu() {
                 print_error "Invalid option"
                 ;;
         esac
-       
+        
         echo ""
     done
 }
+
 # Initialize
 check_root
 main_menu
