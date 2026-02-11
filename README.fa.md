@@ -148,18 +148,19 @@ bash <(curl -fsSL https://raw.githubusercontent.com/behzadea12/Paqet-Tunnel-Mana
   [https://github.com/alinezamifar/DetectUbuntuMirror](https://github.com/alinezamifar/DetectUbuntuMirror)
 
 ---
-
 ## عیب‌یابی: مشکلات نصب Paqet
 
 اگر در هنگام پیکربندی، نصب Paqet به‌صورت خودکار انجام نشد
 (مثلاً پیام **"Failed to install Paqet"** نمایش داده شد یا اسکریپت هنگام افزودن کانفیگ در حالت **Kharej** یا **Iran** متوقف شد)، مراحل زیر را انجام دهید:
+
+---
 
 ### 1. دانلود دستی فایل Paqet
 
 به صفحه ریلیز رسمی مراجعه کنید:
 [https://github.com/hanselime/paqet/releases](https://github.com/hanselime/paqet/releases)
 
-* **آخرین نسخه** را دانلود کنید (مثلاً `v1.0.0-alpha.13` یا جدیدتر)
+* **آخرین نسخه** را دانلود کنید.
 * فایل متناسب با معماری سرور خود را انتخاب کنید:
 
   * `paqet-linux-amd64-*.tar.gz` → برای سرورهای 64 بیتی (x86_64 / amd64)
@@ -186,6 +187,93 @@ mkdir -p /root/paqet
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/behzadea12/Paqet-Tunnel-Manager/main/paqet-manager.sh)
 ```
+
+---
+
+### 4. خطای GLIBC_2.32 یا GLIBC_2.34 not found
+
+اگر سرویس با خطایی مشابه زیر متوقف شد:
+
+```
+/usr/local/bin/paqet: version `GLIBC_2.34' not found
+```
+
+یعنی نسخه glibc سیستم شما قدیمی‌تر از نسخه موردنیاز باینری Paqet است
+(مثلاً Ubuntu 18.04 یا Debian 10).
+
+#### راه‌حل اول: ارتقای سیستم‌عامل
+
+سیستم‌عامل را به توزیعی با glibc 2.34+ ارتقا دهید:
+
+* Ubuntu 22.04 یا جدیدتر
+* Debian 12 یا جدیدتر
+
+سپس دوباره Paqet را با منیجر (گزینه 0) نصب کنید.
+
+#### راه‌حل دوم: کامپایل از سورس روی همان سرور
+
+برای اینکه Paqet با glibc فعلی سیستم شما لینک شود:
+
+```bash
+apt install -y golang git
+git clone https://github.com/hanselime/paqet.git && cd paqet
+go build -o paqet ./cmd/paqet
+sudo cp paqet /usr/local/bin/paqet
+sudo chmod +x /usr/local/bin/paqet
+```
+
+سپس سرویس Paqet را دوباره استارت کنید:
+
+List Services → Manage → Start
+
+#### راه‌حل سوم: استفاده از VPS جدیدتر
+
+از یک VPS با توزیع جدیدتر (مثلاً Ubuntu 22.04) استفاده کرده و Paqet را روی آن نصب کنید.
+
+---
+
+### 5. خطای bind: address already in use (پورت در حال استفاده است)
+
+اگر Paqet با خطایی مشابه زیر متوقف شد:
+
+```
+failed to bind TCP socket on 0.0.0.0:8443: bind: address already in use
+```
+
+یعنی آن پورت (مثلاً 8443) روی همان سرور قبلاً توسط برنامهٔ دیگری استفاده می‌شود، یا همان پورت دو بار در لیست forward وارد شده است.
+
+#### بررسی استفاده از پورت
+
+```bash
+ss -tuln | grep 8443
+```
+
+یا
+
+```bash
+lsof -i :8443
+```
+
+اگر سرویس دیگری (مثلاً nginx، وب‌سرور، یا V2Ray) روی آن پورت فعال است، یا آن سرویس را متوقف کنید یا در کانفیگ Paqet پورت دیگری انتخاب کنید.
+
+#### حذف پورت تکراری
+
+اگر پورتی دو بار در لیست پورت‌ها وارد شده است:
+
+* فایل کانفیگ را ویرایش کنید:
+
+```bash
+nano /etc/paqet/نام_کانفیگ.yaml
+```
+
+* در بخش `forward:`، هر خطی که همان پورت را دوباره `listen` می‌کند حذف کنید.
+* سپس سرویس را ریستارت کنید:
+
+```bash
+systemctl restart paqet-نام_کانفیگ
+```
+
+در نسخه‌های جدید اسکریپت، پورت‌های تکراری به‌صورت خودکار حذف می‌شوند.
 
 ---
 
