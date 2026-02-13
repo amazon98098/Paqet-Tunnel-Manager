@@ -294,14 +294,32 @@ This project is licensed under the **MIT License**.
 
 If you are using **Paqet-Tunnel-Manager** and want to support the development of this project, you can contribute via:
 
-<details>
 <summary>💰 Crypto</summary>
 <br>
 
-* **Tron (TRC20):**
+**Tron (TRC20):** `TFYnorJt5gvejLwR8XQdjep1krS9Zw8pz3`
+
+**Ton:** `UQBXx5-u5Wzv58BUjIKtMGKG06Je0pGUO0sQ4HFh2Y_AOXgR`
+
+**Tether:**
+
+**Trc20**
+`TFYnorJt5gvejLwR8XQdjep1krS9Zw8pz3`
+
+**Ton**
+`UQBXx5-u5Wzv58BUjIKtMGKG06Je0pGUO0sQ4HFh2Y_AOXgR`
+
+**bep20**
+`0x06B904248da14E20D3d33eb6Ab7Be282AA9e6fBe`
+
+
+**Tron (TRC20):**
   `TFYnorJt5gvejLwR8XQdjep1krS9Zw8pz3`
 
-</details>
+<a href="https://nowpayments.io/donation?api_key=4e70f48c-0593-457b-a4eb-3ec56159a0a3" target="_blank" rel="noreferrer noopener">
+    <img src="https://nowpayments.io/images/embeds/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
+</a>
+
 
 > Any contribution, big or small, helps keep the project alive and motivates further development. 🙏
 
