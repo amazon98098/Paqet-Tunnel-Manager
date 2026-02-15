@@ -1676,10 +1676,10 @@ configure_client() {
                     echo -e "Authentication: ${GREEN}Enabled${NC}"
                     SOCKS5_USER="$socks_user"
                     SOCKS5_PASS="$socks_pass"
-                    socks5_entries+=("  - listen: \"0.0.0.0:$socks_port\"\n    username: \"$socks_user\"\n    password: \"$socks_pass\"")
+                    socks5_entries+=("  - listen: \"127.0.0.1:$socks_port\"\n    username: \"$socks_user\"\n    password: \"$socks_pass\"")
                 else
                     echo -e "Authentication: ${YELLOW}Disabled${NC}"
-                    socks5_entries+=("  - listen: \"0.0.0.0:$socks_port\"")
+                    socks5_entries+=("  - listen: \"127.0.0.1:$socks_port\"")
                 fi
                 
                 SOCKS5_PORT="$socks_port"
