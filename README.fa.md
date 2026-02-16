@@ -66,8 +66,6 @@ bash <(curl -fsSL https://raw.githubusercontent.com/behzadea12/Paqet-Tunnel-Mana
 10. **pcap sockbuf** → برای مقدار پیش‌فرض **Enter** بزنید
 11. **transport tcpbuf** → برای مقدار پیش‌فرض **Enter** بزنید
 12. **transport udpbuf** → برای مقدار پیش‌فرض **Enter** بزنید
-13. **پورت یا پورت‌های V2Ray** را وارد کنید
-    تک پورت: `9090` — چند پورت: `9090,9091,9092`
 
 ---
 
