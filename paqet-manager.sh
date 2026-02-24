@@ -50,7 +50,7 @@ readonly BACKUP_LIMITS="${BACKUP_DIR}/limits-99-paqet.backup-$(date +%Y%m%d-%H%M
 readonly DEFAULT_LISTEN_PORT="8888"
 readonly DEFAULT_KCP_MODE="fast"
 readonly DEFAULT_ENCRYPTION="aes-128-gcm"
-readonly DEFAULT_CONNECTIONS="4"
+readonly DEFAULT_CONNECTIONS="8"
 readonly DEFAULT_MTU="1150"
 readonly DEFAULT_PCAP_SOCKBUF_SERVER="8388608"
 readonly DEFAULT_PCAP_SOCKBUF_CLIENT="4194304"
@@ -1174,17 +1174,11 @@ configure_server() {
         
         # [3/12] Secret Key
         local secret_key
-        secret_key=$(generate_secret_key)
-        echo -e "${YELLOW}[3/12] Secret Key : ${GREEN}$secret_key${NC} (press Enter for auto-generate)"
-        read -p "Use this key? (Y/n): " use
-        
-        if [[ "$use" =~ ^[Nn]$ ]]; then
-            echo -en "${YELLOW}[3/12] Secret Key : ${NC}"
-            read -r secret_key
-            if [ ${#secret_key} -lt 8 ]; then
-                print_error "Too short (min 8 characters)"
-                continue
-            fi
+        echo -e "${YELLOW}[3/12] Secret Key : "
+        read -r secret_key
+        if [ ${#secret_key} -lt 8 ]; then
+            print_error "Too short (min 8 characters)"
+            continue
         fi
         echo -e "[3/12] Secret Key : ${GREEN}$secret_key${NC}"
         
@@ -1221,112 +1215,35 @@ configure_server() {
         
         # [5/12] Connections
         echo -en "${YELLOW}[5/12] Connections [1-32, 0=skip] (default $DEFAULT_CONNECTIONS): ${NC}"
-        read -r conn_input
-        local conn=""
-        if [ -z "$conn_input" ]; then
-            conn="$DEFAULT_CONNECTIONS"
-            echo -e "[5/12] Connections : ${CYAN}$DEFAULT_CONNECTIONS (default)${NC}"
-        elif [ "$conn_input" = "0" ]; then
-            conn=""
-            echo -e "[5/12] Connections : ${CYAN}- (skipped)${NC}"
-        elif [[ "$conn_input" =~ ^[1-9][0-9]?$ ]] && [ "$conn_input" -ge 1 ] && [ "$conn_input" -le 32 ]; then
-            conn="$conn_input"
-            echo -e "[5/12] Connections : ${CYAN}$conn_input${NC}"
-        else
-            conn="$DEFAULT_CONNECTIONS"
-            echo -e "${YELLOW}Invalid, using default $DEFAULT_CONNECTIONS${NC}"
-            echo -e "[5/12] Connections : ${CYAN}$DEFAULT_CONNECTIONS (corrected)${NC}"
-        fi
-        
+        local conn="$DEFAULT_CONNECTIONS"
+        echo -e "[5/12] Connections : ${CYAN}$DEFAULT_CONNECTIONS (default)${NC}"
+
         # [6/12] MTU
         echo -en "${YELLOW}[6/12] MTU [100-9000, 0=skip] (default $DEFAULT_MTU): ${NC}"
-        read -r mtu_input
-        local mtu=""
-        if [ -z "$mtu_input" ]; then
-            mtu="$DEFAULT_MTU"
-            echo -e "[6/12] MTU : ${CYAN}$DEFAULT_MTU (default)${NC}"
-        elif [ "$mtu_input" = "0" ]; then
-            mtu=""
-            echo -e "[6/12] MTU : ${CYAN}- (skipped)${NC}"
-        elif [[ "$mtu_input" =~ ^[0-9]+$ ]] && [ "$mtu_input" -ge 100 ] && [ "$mtu_input" -le 9000 ]; then
-            mtu="$mtu_input"
-            echo -e "[6/12] MTU : ${CYAN}$mtu_input${NC}"
-        else
-            mtu="$DEFAULT_MTU"
-            echo -e "${YELLOW}Invalid, using default $DEFAULT_MTU${NC}"
-            echo -e "[6/12] MTU : ${CYAN}$DEFAULT_MTU (corrected)${NC}"
-        fi
-        
+        local mtu="$DEFAULT_MTU"
+        echo -e "[6/12] MTU : ${CYAN}$DEFAULT_MTU (default)${NC}"
+
         # [7/12] Encryption
         echo -e "\n${CYAN}Encryption Selection${NC}"
         echo -e "────────────────────────────────────────────────────────────────"
-        for enc_key in 1 2 3 4 5 6 7; do
-            IFS=':' read -r enc_name enc_desc <<< "${ENCRYPTION_OPTIONS[$enc_key]}"
-            echo " [${enc_key}] ${enc_name} - ${enc_desc}"
-        done
-        echo ""
-        
-        local enc_choice
-        read -p "[7/12] Choose encryption [1-7] (default 1): " enc_choice
-        enc_choice="${enc_choice:-1}"
-        
-        local block
-        IFS=':' read -r block _ <<< "${ENCRYPTION_OPTIONS[$enc_choice]}"
-        block="${block:-aes-128-gcm}"
+        local block="${block:-aes-128-gcm}"
         echo -e "[7/12] Encryption : ${CYAN}$block${NC}"
-        
+
         # [8/12] pcap sockbuf
         echo -en "${YELLOW}[8/12] pcap sockbuf [Enter=skip, 0=skip]: ${NC}"
-        read -r pcap_input
         local pcap_sockbuf=""
-        
-        if [ -n "$pcap_input" ] && [ "$pcap_input" != "0" ]; then
-            # فقط اگر عدد معتبر وارد کرد
-            if [[ "$pcap_input" =~ ^[0-9]+$ ]]; then
-                pcap_sockbuf="$pcap_input"
-                echo -e "[8/12] pcap sockbuf : ${CYAN}$pcap_input${NC}"
-            else
-                print_warning "Invalid number, skipping pcap sockbuf"
-                echo -e "[8/12] pcap sockbuf : ${CYAN}skipped${NC}"
-            fi
-        else
-            echo -e "[8/12] pcap sockbuf : ${CYAN}skipped${NC}"
-        fi
-        
+        echo -e "[8/12] pcap sockbuf : ${CYAN}skipped${NC}"
+
         # [9/12] transport tcpbuf
         echo -en "${YELLOW}[9/12] transport tcpbuf [Enter=skip, 0=skip]: ${NC}"
-        read -r tcpbuf_input
         local transport_tcpbuf=""
-        
-        if [ -n "$tcpbuf_input" ] && [ "$tcpbuf_input" != "0" ]; then
-            if [[ "$tcpbuf_input" =~ ^[0-9]+$ ]]; then
-                transport_tcpbuf="$tcpbuf_input"
-                echo -e "[9/12] transport tcpbuf : ${CYAN}$tcpbuf_input${NC}"
-            else
-                print_warning "Invalid number, skipping transport tcpbuf"
-                echo -e "[9/12] transport tcpbuf : ${CYAN}skipped${NC}"
-            fi
-        else
-            echo -e "[9/12] transport tcpbuf : ${CYAN}skipped${NC}"
-        fi
-        
+        echo -e "[9/12] transport tcpbuf : ${CYAN}skipped${NC}"
+
         # [10/12] transport udpbuf
         echo -en "${YELLOW}[10/12] transport udpbuf [Enter=skip, 0=skip]: ${NC}"
-        read -r udpbuf_input
         local transport_udpbuf=""
-        
-        if [ -n "$udpbuf_input" ] && [ "$udpbuf_input" != "0" ]; then
-            if [[ "$udpbuf_input" =~ ^[0-9]+$ ]]; then
-                transport_udpbuf="$udpbuf_input"
-                echo -e "[10/12] transport udpbuf : ${CYAN}$udpbuf_input${NC}"
-            else
-                print_warning "Invalid number, skipping transport udpbuf"
-                echo -e "[10/12] transport udpbuf : ${CYAN}skipped${NC}"
-            fi
-        else
-            echo -e "[10/12] transport udpbuf : ${CYAN}skipped${NC}"
-        fi
-        
+        echo -e "[10/12] transport udpbuf : ${CYAN}skipped${NC}"
+
         # Apply configuration
         echo -e "\n${CYAN}Applying Configuration${NC}"
         echo -e "────────────────────────────────────────────────────────────────"
@@ -1424,35 +1341,12 @@ configure_server() {
             
             echo ""
             echo -e "${GREEN}✅ Server setup completed successfully!${NC}"
-            echo -e "${CYAN}Options:${NC}"
-            echo -e " 1. Press ${GREEN}Enter${NC} to go to service management for $config_name"
-            echo -e " 2. Type ${YELLOW}menu${NC} to return to main menu"
-            echo -e " 3. Type ${YELLOW}exit${NC} to exit"
             echo ""
             
-            read -p "Your choice [Enter/menu/exit]: " post_choice
-            
-            case "${post_choice,,}" in
-                ""|enter)
-                    echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
-                    sleep 1
-                    manage_single_service "$svc" "$config_name"
-                    ;;
-                menu)
-                    echo -e "${CYAN}Returning to main menu...${NC}"
-                    sleep 1
-                    return 0
-                    ;;
-                exit)
-                    echo -e "${GREEN}Goodbye!${NC}"
-                    exit 0
-                    ;;
-                *)
-                    echo -e "${YELLOW}Invalid choice. Returning to main menu...${NC}"
-                    sleep 2
-                    return 0
-                    ;;
-            esac
+            echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
+            sleep 1
+            manage_single_service "$svc" "$config_name"
+            ;;
         else
             print_error "Service failed to start"
             systemctl status "$svc" --no-pager -l
@@ -1551,111 +1445,35 @@ configure_client() {
         
         # [6/15] Connections
         echo -en "${YELLOW}[6/15] Connections [1-32, 0=skip] (default $DEFAULT_CONNECTIONS): ${NC}"
-        read -r conn_input
-        local conn=""
-        if [ -z "$conn_input" ]; then
-            conn="$DEFAULT_CONNECTIONS"
-            echo -e "[6/15] Connections : ${CYAN}$DEFAULT_CONNECTIONS (default)${NC}"
-        elif [ "$conn_input" = "0" ]; then
-            conn=""
-            echo -e "[6/15] Connections : ${CYAN}- (skipped)${NC}"
-        elif [[ "$conn_input" =~ ^[1-9][0-9]?$ ]] && [ "$conn_input" -ge 1 ] && [ "$conn_input" -le 32 ]; then
-            conn="$conn_input"
-            echo -e "[6/15] Connections : ${CYAN}$conn_input${NC}"
-        else
-            conn="$DEFAULT_CONNECTIONS"
-            echo -e "${YELLOW}Invalid, using default $DEFAULT_CONNECTIONS${NC}"
-            echo -e "[6/15] Connections : ${CYAN}$DEFAULT_CONNECTIONS (corrected)${NC}"
-        fi
-        
+        local conn="$DEFAULT_CONNECTIONS"
+        echo -e "[6/15] Connections : ${CYAN}$DEFAULT_CONNECTIONS (default)${NC}"
+
         # [7/15] MTU
         echo -en "${YELLOW}[7/15] MTU [100-9000, 0=skip] (default $DEFAULT_MTU): ${NC}"
-        read -r mtu_input
-        local mtu=""
-        if [ -z "$mtu_input" ]; then
-            mtu="$DEFAULT_MTU"
-            echo -e "[7/15] MTU : ${CYAN}$DEFAULT_MTU (default)${NC}"
-        elif [ "$mtu_input" = "0" ]; then
-            mtu=""
-            echo -e "[7/15] MTU : ${CYAN}- (skipped)${NC}"
-        elif [[ "$mtu_input" =~ ^[0-9]+$ ]] && [ "$mtu_input" -ge 100 ] && [ "$mtu_input" -le 9000 ]; then
-            mtu="$mtu_input"
-            echo -e "[7/15] MTU : ${CYAN}$mtu_input${NC}"
-        else
-            mtu="$DEFAULT_MTU"
-            echo -e "${YELLOW}Invalid, using default $DEFAULT_MTU${NC}"
-            echo -e "[7/15] MTU : ${CYAN}$DEFAULT_MTU (corrected)${NC}"
-        fi
-        
+        local mtu="$DEFAULT_MTU"
+        echo -e "[7/15] MTU : ${CYAN}$DEFAULT_MTU (default)${NC}"
+
         # [8/15] Encryption
         echo -e "\n${CYAN}Encryption Selection${NC}"
         echo -e "────────────────────────────────────────────────────────────────"
-        for enc_key in 1 2 3 4 5 6 7; do
-            IFS=':' read -r enc_name enc_desc <<< "${ENCRYPTION_OPTIONS[$enc_key]}"
-            echo " [${enc_key}] ${enc_name} - ${enc_desc}"
-        done
-        echo ""
-        
-        local enc_choice
-        read -p "[8/15] Choose encryption [1-7] (default 1): " enc_choice
-        enc_choice="${enc_choice:-1}"
-        
-        local block
-        IFS=':' read -r block _ <<< "${ENCRYPTION_OPTIONS[$enc_choice]}"
-        block="${block:-aes-128-gcm}"
+        local block="${block:-aes-128-gcm}"
         echo -e "[8/15] Encryption : ${CYAN}$block${NC}"
         
          # [9/15] pcap sockbuf
         echo -en "${YELLOW}[9/15] pcap sockbuf [Enter=skip, 0=skip]: ${NC}"
-        read -r pcap_input
         local pcap_sockbuf=""
-        
-        if [ -n "$pcap_input" ] && [ "$pcap_input" != "0" ]; then
-            if [[ "$pcap_input" =~ ^[0-9]+$ ]]; then
-                pcap_sockbuf="$pcap_input"
-                echo -e "[9/15] pcap sockbuf : ${CYAN}$pcap_input${NC}"
-            else
-                print_warning "Invalid number, skipping pcap sockbuf"
-                echo -e "[9/15] pcap sockbuf : ${CYAN}skipped${NC}"
-            fi
-        else
-            echo -e "[9/15] pcap sockbuf : ${CYAN}skipped${NC}"
-        fi
-        
+        echo -e "[9/15] pcap sockbuf : ${CYAN}skipped${NC}"
+
         # [10/15] transport tcpbuf
         echo -en "${YELLOW}[10/15] transport tcpbuf [Enter=skip, 0=skip]: ${NC}"
-        read -r tcpbuf_input
         local transport_tcpbuf=""
-        
-        if [ -n "$tcpbuf_input" ] && [ "$tcpbuf_input" != "0" ]; then
-            if [[ "$tcpbuf_input" =~ ^[0-9]+$ ]]; then
-                transport_tcpbuf="$tcpbuf_input"
-                echo -e "[10/15] transport tcpbuf : ${CYAN}$tcpbuf_input${NC}"
-            else
-                print_warning "Invalid number, skipping transport tcpbuf"
-                echo -e "[10/15] transport tcpbuf : ${CYAN}skipped${NC}"
-            fi
-        else
-            echo -e "[10/15] transport tcpbuf : ${CYAN}skipped${NC}"
-        fi
-        
+        echo -e "[10/15] transport tcpbuf : ${CYAN}skipped${NC}"
+
         # [11/15] transport udpbuf
         echo -en "${YELLOW}[11/15] transport udpbuf [Enter=skip, 0=skip]: ${NC}"
-        read -r udpbuf_input
         local transport_udpbuf=""
-        
-        if [ -n "$udpbuf_input" ] && [ "$udpbuf_input" != "0" ]; then
-            if [[ "$udpbuf_input" =~ ^[0-9]+$ ]]; then
-                transport_udpbuf="$udpbuf_input"
-                echo -e "[11/15] transport udpbuf : ${CYAN}$udpbuf_input${NC}"
-            else
-                print_warning "Invalid number, skipping transport udpbuf"
-                echo -e "[11/15] transport udpbuf : ${CYAN}skipped${NC}"
-            fi
-        else
-            echo -e "[11/15] transport udpbuf : ${CYAN}skipped${NC}"
-        fi
-        
+        echo -e "[11/15] transport udpbuf : ${CYAN}skipped${NC}"
+
         # [12/15] Traffic Type
         echo -e "\n${CYAN}Traffic Type Selection${NC}"
         echo -e "────────────────────────────────────────────────────────────────"
@@ -1663,10 +1481,8 @@ configure_client() {
         echo -e " ${GREEN}[2]${NC} SOCKS5 Proxy - Create a SOCKS5 proxy"
         echo ""
         
-        local traffic_type
-        read -p "[12/15] Choose traffic type [1-2] (default 1): " traffic_type
-        traffic_type="${traffic_type:-1}"
-        
+        local traffic_type="1"
+
         local forward_entries=()
         local socks5_entries=()
         local display_ports=""
@@ -1674,105 +1490,32 @@ configure_client() {
         local SOCKS5_USER=""
         local SOCKS5_PASS=""
         
-        case $traffic_type in
-            1)
-                echo -e "\n${CYAN}Port Forwarding Configuration${NC}"
-                echo -e "────────────────────────────────────────────────────────────────"
-                
-                echo -en "${YELLOW}[13/15] Forward Ports (comma separated) [default $DEFAULT_V2RAY_PORTS]: ${NC}"
-                read -r forward_ports
-                forward_ports=$(clean_port_list "${forward_ports:-$DEFAULT_V2RAY_PORTS}")
-                [ -z "$forward_ports" ] && { print_error "No valid ports"; continue; }
-                echo -e "[13/15] Forward Ports : ${CYAN}$forward_ports${NC}"
-                
-                echo -e "\n${CYAN}Protocol Selection${NC}"
-                echo -e "────────────────────────────────────────────────────────────────"
-                echo " [1] tcp - TCP only (default)"
-                echo " [2] udp - UDP only"
-                echo " [3] tcp/udp - Both"
-                echo ""
-                
-                IFS=',' read -ra PORTS <<< "$forward_ports"
-                for p in "${PORTS[@]}"; do
-                    p=$(echo "$p" | tr -d '[:space:]')
-                    echo -en "${YELLOW}Port $p → protocol [1-3] : ${NC}"
-                    read -r proto_choice
-                    proto_choice="${proto_choice:-1}"
-                    
-                    case $proto_choice in
-                        1)
-                            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"tcp\"")
-                            display_ports+=" $p (TCP)"
-                            configure_iptables "$p" "tcp"
-                            ;;
-                        2)
-                            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"udp\"")
-                            display_ports+=" $p (UDP)"
-                            configure_iptables "$p" "udp"
-                            ;;
-                        3)
-                            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"tcp\"")
-                            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"udp\"")
-                            display_ports+=" $p (TCP+UDP)"
-                            configure_iptables "$p" "both"
-                            ;;
-                        *)
-                            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"tcp\"")
-                            display_ports+=" $p (TCP)"
-                            configure_iptables "$p" "tcp"
-                            ;;
-                    esac
-                done
-                echo -e "[13/15] Protocol(s) : ${CYAN}${display_ports# }${NC}"
-                ;;
-                
-            2)
-                echo -e "\n${CYAN}SOCKS5 Proxy Configuration${NC}"
-                echo -e "────────────────────────────────────────────────────────────────"
-                
-                echo -en "${YELLOW}[13/15] SOCKS5 Proxy Port (default $DEFAULT_SOCKS5_PORT): ${NC}"
-                read -r socks_port
-                socks_port="${socks_port:-$DEFAULT_SOCKS5_PORT}"
-                validate_port "$socks_port" || { print_error "Invalid port"; continue; }
-                echo -e "[13/15] SOCKS5 Port : ${CYAN}$socks_port${NC}"
-                
-                check_port_conflict "$socks_port" || { pause "Press Enter to retry..."; continue; }
-                configure_iptables "$socks_port" "tcp"
-                
-                echo -e "\n${CYAN}SOCKS5 Authentication (Optional)${NC}"
-                echo -e "────────────────────────────────────────────────────────────────"
-                echo -e "${YELLOW}Leave empty for no authentication${NC}"
-                
-                echo -en "${YELLOW}SOCKS5 Username: ${NC}"
-                read -r socks_user
-                
-                if [ -n "$socks_user" ]; then
-                    echo -en "${YELLOW}SOCKS5 Password: ${NC}"
-                    read -r socks_pass
-                    
-                    if [ -z "$socks_pass" ]; then
-                        print_error "Password required if username is set"
-                        continue
-                    fi
-                    
-                    echo -e "Authentication: ${GREEN}Enabled${NC}"
-                    SOCKS5_USER="$socks_user"
-                    SOCKS5_PASS="$socks_pass"
-                    socks5_entries+=("  - listen: \"127.0.0.1:$socks_port\"\n    username: \"$socks_user\"\n    password: \"$socks_pass\"")
-                else
-                    echo -e "Authentication: ${YELLOW}Disabled${NC}"
-                    socks5_entries+=("  - listen: \"127.0.0.1:$socks_port\"")
-                fi
-                
-                SOCKS5_PORT="$socks_port"
-                ;;
-                
-            *)
-                print_error "Invalid choice"
-                continue
-                ;;
-        esac
+        echo -e "\n${CYAN}Port Forwarding Configuration${NC}"
+        echo -e "────────────────────────────────────────────────────────────────"
 
+        echo -en "${YELLOW}[13/15] Forward Ports (comma separated) [default $DEFAULT_V2RAY_PORTS]: ${NC}"
+        read -r forward_ports
+        forward_ports=$(clean_port_list "${forward_ports:-$DEFAULT_V2RAY_PORTS}")
+        [ -z "$forward_ports" ] && { print_error "No valid ports"; continue; }
+        echo -e "[13/15] Forward Ports : ${CYAN}$forward_ports${NC}"
+
+        echo -e "\n${CYAN}Protocol Selection${NC}"
+        echo -e "────────────────────────────────────────────────────────────────"
+
+
+        IFS=',' read -ra PORTS <<< "$forward_ports"
+        for p in "${PORTS[@]}"; do
+            p=$(echo "$p" | tr -d '[:space:]')
+            proto_choice="1"
+
+            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"tcp\"")
+            display_ports+=" $p (TCP)"
+            configure_iptables "$p" "tcp"
+            ;;
+        done
+        echo -e "[13/15] Protocol(s) : ${CYAN}${display_ports# }${NC}"
+        ;;
+                
         if [[ "$traffic_type" == "1" ]]; then
             if ! validate_forward_rules; then
                 echo -e "\n${RED}⚠️  TRAFFIC LOOP DETECTED!${NC}"
@@ -1902,35 +1645,14 @@ configure_client() {
             
             echo ""
             echo -e "${GREEN}✅ Client setup completed successfully!${NC}"
-            echo -e "${CYAN}Options:${NC}"
-            echo -e " 1. Press ${GREEN}Enter${NC} to go to service management for $config_name"
-            echo -e " 2. Type ${YELLOW}menu${NC} to return to main menu"
-            echo -e " 3. Type ${YELLOW}exit${NC} to exit"
             echo ""
             
             read -p "Your choice [Enter/menu/exit]: " post_choice
             
-            case "${post_choice,,}" in
-                ""|enter)
-                    echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
-                    sleep 1
-                    manage_single_service "$svc" "$config_name"
-                    ;;
-                menu)
-                    echo -e "${CYAN}Returning to main menu...${NC}"
-                    sleep 1
-                    return 0
-                    ;;
-                exit)
-                    echo -e "${GREEN}Goodbye!${NC}"
-                    exit 0
-                    ;;
-                *)
-                    echo -e "${YELLOW}Invalid choice. Returning to main menu...${NC}"
-                    sleep 2
-                    return 0
-                    ;;
-            esac
+            echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
+            sleep 1
+            manage_single_service "$svc" "$config_name"
+            ;;
         else
             print_error "Client failed to start"
             systemctl status "$svc" --no-pager -l
