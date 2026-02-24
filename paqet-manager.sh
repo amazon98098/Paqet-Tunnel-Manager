@@ -1538,6 +1538,7 @@ configure_client() {
                     configure_iptables "$p" "tcp"
                 done
                 echo -e "[13/15] Protocol(s) : ${CYAN}${display_ports# }${NC}"
+                ;;
 
         esac
                 
