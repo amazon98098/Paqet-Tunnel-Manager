@@ -1512,32 +1512,39 @@ configure_client() {
         local SOCKS5_PORT=""
         local SOCKS5_USER=""
         local SOCKS5_PASS=""
-        
-        echo -e "\n${CYAN}Port Forwarding Configuration${NC}"
-        echo -e "────────────────────────────────────────────────────────────────"
 
-        echo -en "${YELLOW}[13/15] Forward Ports (comma separated) [default $DEFAULT_V2RAY_PORTS]: ${NC}"
-        read -r forward_ports
-        forward_ports=$(clean_port_list "${forward_ports:-$DEFAULT_V2RAY_PORTS}")
-        [ -z "$forward_ports" ] && { print_error "No valid ports"; continue; }
-        echo -e "[13/15] Forward Ports : ${CYAN}$forward_ports${NC}"
+        case $traffic_type in
+            1)
+                echo -e "\n${CYAN}Port Forwarding Configuration${NC}"
+                echo -e "────────────────────────────────────────────────────────────────"
 
-        echo -e "\n${CYAN}Protocol Selection${NC}"
-        echo -e "────────────────────────────────────────────────────────────────"
+                echo -en "${YELLOW}[13/15] Forward Ports (comma separated) [default $DEFAULT_V2RAY_PORTS]: ${NC}"
+                read -r forward_ports
+                forward_ports=$(clean_port_list "${forward_ports:-$DEFAULT_V2RAY_PORTS}")
+                [ -z "$forward_ports" ] && { print_error "No valid ports"; continue; }
+                echo -e "[13/15] Forward Ports : ${CYAN}$forward_ports${NC}"
+
+                echo -e "\n${CYAN}Protocol Selection${NC}"
+                echo -e "────────────────────────────────────────────────────────────────"
 
 
-        IFS=',' read -ra PORTS <<< "$forward_ports"
-        for p in "${PORTS[@]}"; do
-            p=$(echo "$p" | tr -d '[:space:]')
-            proto_choice="1"
+                IFS=',' read -ra PORTS <<< "$forward_ports"
+                for p in "${PORTS[@]}"; do
+                    p=$(echo "$p" | tr -d '[:space:]')
+                    proto_choice="1"
 
-            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"tcp\"")
-            display_ports+=" $p (TCP)"
-            configure_iptables "$p" "tcp"
-            ;;
-        done
-        echo -e "[13/15] Protocol(s) : ${CYAN}${display_ports# }${NC}"
-        ;;
+                    case $proto_choice in
+                        1)
+                            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"tcp\"")
+                            display_ports+=" $p (TCP)"
+                            configure_iptables "$p" "tcp"
+                            ;;
+                    esac
+                done
+                echo -e "[13/15] Protocol(s) : ${CYAN}${display_ports# }${NC}"
+                ;;
+
+        esac
                 
         if [[ "$traffic_type" == "1" ]]; then
             if ! validate_forward_rules; then
