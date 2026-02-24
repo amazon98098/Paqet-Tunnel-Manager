@@ -7,7 +7,12 @@ Telegram Channel:
 https://t.me/BehzadEa12
 
 ---
-
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-1.3.0-blue?style=for-the-badge&logo=linux" alt="Version">
+  <img src="https://img.shields.io/badge/Platform-Linux-orange?style=for-the-badge" alt="Platform">
+  <img src="https://img.shields.io/github/stars/behzadea12/Paqet-Tunnel-Manager?style=for-the-badge&color=yellow" alt="Stars">
+  <img src="https://img.shields.io/github/forks/behzadea12/Paqet-Tunnel-Manager?style=for-the-badge&color=green" alt="Forks">
+</p>
 ## Table of Contents
 
 * [Quick Start](#quick-start)
