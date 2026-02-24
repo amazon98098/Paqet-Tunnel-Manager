@@ -1533,16 +1533,12 @@ configure_client() {
                     p=$(echo "$p" | tr -d '[:space:]')
                     proto_choice="1"
 
-                    case $proto_choice in
-                        1)
-                            forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"tcp\"")
-                            display_ports+=" $p (TCP)"
-                            configure_iptables "$p" "tcp"
-                            ;;
-                    esac
+                    forward_entries+=("  - listen: \"0.0.0.0:$p\"\n    target: \"127.0.0.1:$p\"\n    protocol: \"tcp\"")
+                    display_ports+=" $p (TCP)"
+                    configure_iptables "$p" "tcp"
+                    ;;
                 done
                 echo -e "[13/15] Protocol(s) : ${CYAN}${display_ports# }${NC}"
-                ;;
 
         esac
                 
