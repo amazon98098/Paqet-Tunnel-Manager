@@ -1341,11 +1341,35 @@ configure_server() {
             
             echo ""
             echo -e "${GREEN}✅ Server setup completed successfully!${NC}"
+            echo -e "${CYAN}Options:${NC}"
+            echo -e " 1. Press ${GREEN}Enter${NC} to go to service management for $config_name"
+            echo -e " 2. Type ${YELLOW}menu${NC} to return to main menu"
+            echo -e " 3. Type ${YELLOW}exit${NC} to exit"
             echo ""
-            
-            echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
-            sleep 1
-            manage_single_service "$svc" "$config_name"
+
+            read -p "Your choice [Enter/menu/exit]: " post_choice
+
+            case "${post_choice,,}" in
+                ""|enter)
+                    echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
+                    sleep 1
+                    manage_single_service "$svc" "$config_name"
+                    ;;
+                menu)
+                    echo -e "${CYAN}Returning to main menu...${NC}"
+                    sleep 1
+                    return 0
+                    ;;
+                exit)
+                    echo -e "${GREEN}Goodbye!${NC}"
+                    exit 0
+                    ;;
+                *)
+                    echo -e "${YELLOW}Invalid choice. Returning to main menu...${NC}"
+                    sleep 2
+                    return 0
+                    ;;
+            esac
         else
             print_error "Service failed to start"
             systemctl status "$svc" --no-pager -l
@@ -1644,13 +1668,35 @@ configure_client() {
             
             echo ""
             echo -e "${GREEN}✅ Client setup completed successfully!${NC}"
+            echo -e "${CYAN}Options:${NC}"
+            echo -e " 1. Press ${GREEN}Enter${NC} to go to service management for $config_name"
+            echo -e " 2. Type ${YELLOW}menu${NC} to return to main menu"
+            echo -e " 3. Type ${YELLOW}exit${NC} to exit"
             echo ""
-            
+
             read -p "Your choice [Enter/menu/exit]: " post_choice
-            
-            echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
-            sleep 1
-            manage_single_service "$svc" "$config_name"
+
+            case "${post_choice,,}" in
+                ""|enter)
+                    echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
+                    sleep 1
+                    manage_single_service "$svc" "$config_name"
+                    ;;
+                menu)
+                    echo -e "${CYAN}Returning to main menu...${NC}"
+                    sleep 1
+                    return 0
+                    ;;
+                exit)
+                    echo -e "${GREEN}Goodbye!${NC}"
+                    exit 0
+                    ;;
+                *)
+                    echo -e "${YELLOW}Invalid choice. Returning to main menu...${NC}"
+                    sleep 2
+                    return 0
+                    ;;
+            esac
         else
             print_error "Client failed to start"
             systemctl status "$svc" --no-pager -l
