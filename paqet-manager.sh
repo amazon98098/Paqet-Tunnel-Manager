@@ -1346,7 +1346,6 @@ configure_server() {
             echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
             sleep 1
             manage_single_service "$svc" "$config_name"
-            ;;
         else
             print_error "Service failed to start"
             systemctl status "$svc" --no-pager -l
@@ -1652,7 +1651,6 @@ configure_client() {
             echo -e "${GREEN}➡️ Taking you to service management for $config_name...${NC}"
             sleep 1
             manage_single_service "$svc" "$config_name"
-            ;;
         else
             print_error "Client failed to start"
             systemctl status "$svc" --no-pager -l
